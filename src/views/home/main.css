@@ -9,7 +9,7 @@
     height: 100%;
   }
   body {
-    background: url(../../assets/img/53bg.png) no-repeat;
+    background: url(../../assets/img/53bg.png) no-repeat bottom center;
     background-size: 100%;
   }
   @font-face {
@@ -40,6 +40,7 @@
     background: url(../../assets/img/53titlebg.png) no-repeat top center;
     background-size: 100%;
     text-align: center;
+    z-index: 999;
     margin-left: -1rem;
   }
   .main {
@@ -47,19 +48,20 @@
   height: 68%;
   padding: 0 2.5%;
   box-sizing: border-box;
-  position: relative;
+  position: absolute;
+  top: 10%;
 }
 .main .total .rain {
+    width: 100%;
     position: absolute;
     left: 0;
     top: 0;
     z-index: -1;
   }
 .main .total {
-    width: 65%;
+    width: 100%;
     height: 30rem;
     float: left;
-    margin:5rem 0 0  16rem;
     position: relative;
   }
   .main .total .rain {
@@ -83,7 +85,7 @@
     position: absolute;
     z-index: 100;
     left: 0;
-    top: 0;
+    top: -8rem;
     width: 100%;
     height: 100%;
     background: url(../../assets/img/53earth.png) no-repeat center;
@@ -93,7 +95,7 @@
     position: absolute;
     z-index: 100;
     left: 0;
-    top: 0;
+    top: -7rem;
     width: 100%;
     height: 100%;
     background: url(../../assets/img/53cloud.png) no-repeat center;
@@ -119,7 +121,7 @@
     background: url(../../assets/img/circle.png) no-repeat center;
     background-size: 100%;
     position: absolute;
-    top: 33%;
+    top: 23%;
     left: 50%;
     transform-style: preserve-3d;
     transform: translateX(-50%) rotateX(75deg);
@@ -129,7 +131,7 @@
     width: 17rem;
     height: 17rem;
     position: absolute;
-    top: 72%;
+    top: 64%;
     left: 50%;
     transform-style: preserve-3d;
     background: url(../../assets/img/53gqright.png) no-repeat center;
@@ -141,7 +143,7 @@
     width: 17rem;
     height: 17rem;
     position: absolute;
-    top: 73%;
+    top: 66%;
     left: 50%;
     transform-style: preserve-3d;
     background: url(../../assets/img/53gqleft.png) no-repeat center;
@@ -153,7 +155,7 @@
     width: 12rem;
     height: 12rem;
     position: absolute;
-    top: 85%;
+    top: 77%;
     left: 50%;
     transform-style: preserve-3d;
     background: url(../../assets/img/535gqbottomright.png) no-repeat center;
@@ -165,7 +167,7 @@
     width: 12rem;
     height: 12rem;
     position: absolute;
-    top: 86%;
+    top: 78%;
     left: 50%;
     transform-style: preserve-3d;
     background: url(../../assets/img/53gqbottomleft.png) no-repeat center;
@@ -180,7 +182,7 @@
     width: 6rem;
     height: 6rem;
     position: absolute;
-    top: 60%;
+    top: 50%;
     left: 50%;
     z-index: 100;
     margin-left: -2.5rem;
@@ -254,8 +256,29 @@
     color: #0ac1c7;
     font-size: 0.8rem;
   }
-
-
+  #left{
+    width: 25%;
+    height:128%;
+    background: url(../../assets/img/left.png) no-repeat top center;
+    background-size: 100%;
+    position: absolute;
+  }
+  #right{
+    width: 25%;
+    height:128%;
+    background: url(../../assets/img/right.png) no-repeat top center;
+    background-size: 100%;
+    position: absolute;
+    right: 2.5%;
+  }
+  #enterPart, #exitPart{
+    margin-left: 1.3rem;
+    margin-top: 3rem;color: rgb(217, 213, 213);font-family: 宋体;
+    font-size: 1.5rem;
+  }
+  #enterPart1, #exitPart1{
+    margin-top: 2rem;
+  }
   /* animation */
   @keyframes rotate {
     0% {
