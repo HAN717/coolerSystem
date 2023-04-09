@@ -8,17 +8,29 @@
     <div class="main">
         <!-- content -->
         <!-- left -->
-        <div id="left">
+        <div id="left" v-show="isCompare==false">
             <!-- 入风口 -->
             <div id="enterPart">
-                <div>冷却机入口处</div>
+                <div id="leftPartTitle">冷却器入口处</div>
                 <div id="enterPart1" style="width: 23.4vw; height: 35vh"></div>
                 <div id="enterPart2" style="width: 23.4vw; height: 35vh"></div>
             </div>
         </div>
+        <!-- left2 -->
+        <div id="left2" v-show="isCompare==true">
+            <!-- 入风口 -->
+            <div id="enterPart">
+                <div id="leftPartTitle">冷却器出入口温度比较</div>
+                <div id="enter2Part1" style="width: 23.4vw; height: 35vh"></div>
+                <div id="enter2Part2" style="width: 23.4vw; height: 35vh"></div>
+            </div>
+        </div>
         <!-- center -->
         <div class="total">
-             <canvas class="rain"></canvas>
+            <canvas class="rain"></canvas>
+            <div id="ratio">
+                <h3>当前风量比:&nbsp;<span>1.25</span></h3>
+              </div>
             <div class="sphere">
                 <div class="sphere-bg"></div>
                 <div class="sum">
@@ -49,124 +61,500 @@
             </div>
         </div>
          <!-- right -->
-         <div id="right">
+         <div id="right" v-show="isCompare == false">
             <!-- 出风口 -->
             <div id="exitPart">
-                <div>冷却机出口处</div>
+                <div id="rightPartTitle">冷却器出口处</div>
                 <div id="exitPart1" style="width: 23.4vw; height: 35vh"></div>
                 <div id="exitPart2" style="width: 23.4vw; height: 35vh"></div>
             </div>
         </div>
+        <!-- right2 -->
+        <div id="right2" v-show="isCompare == true">
+            <!-- 出风口 -->
+            <div id="exitPart">
+                <div id="rightPartTitle">冷却器出入口湿度比较</div>
+                <div id="exit2Part1" style="width: 23.4vw; height: 35vh"></div>
+                <div id="exit2Part2" style="width: 23.4vw; height: 35vh"></div>
+            </div>
+        </div>
     </div>
      <!-- 底部模块 -->
-     <div class="bottom">
-        <h5><span>数据状况</span></h5>
-        <p>Data Status</p>
+     <div class="bottom" @click="changePart()">
+        <h5 v-show="isCompare==false"><span>数据状况</span></h5>
+        <p  v-show="isCompare==false">Data Status</p>
+        <h5 v-show="isCompare==true"><span>数据对比</span></h5>
+        <p  v-show="isCompare==true">Data Compare</p>
     </div>
 </template>
 <script>
 import "./main.css";
 import "../../assets/js/main";
-import {onMounted} from "vue";
 import * as echarts from 'echarts';
 export default {
   data() {
     return {
-
+      isCompare:false,
     }
   },
-  setup() {
-    onMounted(() => {//需要获取到element,所以是onMounted的Hook
-
+  methods:{
+    changePart(){
+      this.isCompare = !this.isCompare;
+    },
     // 左侧part1
+    leftPart1(){  
       let myChartL1 = echarts.init(document.getElementById("enterPart1"));
       // 绘制图表
       myChartL1.setOption({
-        title: { text: "送风温度" },
-        tooltip: {},
+        title: { text: "进风温度(°C)",textStyle:{color:'rgba(10, 191, 197)'} },
+        tooltip: { // 鼠标悬浮提示框显示 X和Y 轴数据
+          trigger: 'axis',
+          backgroundColor: 'rgba(10, 191, 197,.4)',
+          borderColor: 'rgba(32, 33, 36,0.20)',
+          borderWidth: 1,
+          textStyle: { // 文字提示样式
+            color: '#fff',
+            fontSize: '12'
+          },
+          axisPointer: { // 坐标轴虚线
+            type: 'cross',
+            label: {
+                backgroundColor: '#0abfc5'
+            }
+          },
+        },
         xAxis: {
           data: ["12:05", "12:06", "12:07", "12:08", "12:09", "12:10"],
         },
-        yAxis: {},
+        yAxis: { },
         series: [
           {
-            name: "tem",
+            name: "温度",
             type: "line",
             data: [36, 35, 34, 35, 33, 32],
+            label: { // 显示数值
+              show: true,
+              position: 'top',
+              color: '#FFFFFF',
+            },
+            itemStyle: {// 元素样式设置
+              normal: {
+                color: "#FFF",
+                lineStyle: {
+                  color: "rgb(51,192,197)"
+                }
+              }
+            },
           },
         ],
       });
       window.onresize = function () {//自适应大小
         myChartL1.resize();
       };
-
+    }, 
     // 左侧part2  
+    leftPart2(){
     let myChartL2 = echarts.init(document.getElementById("enterPart2")); 
       // 绘制图表
       myChartL2.setOption({
-        title: { text: "送风湿度" },
-        tooltip: {},
+        title: { text: "进风湿度(RH)" ,textStyle:{color:'rgb(242, 151, 1)'} },
+        tooltip: { // 鼠标悬浮提示框显示 X和Y 轴数据
+          trigger: 'axis',
+          backgroundColor: 'rgba(242, 151, 1,.4)',
+          borderColor: 'rgba(32, 33, 36,0.20)',
+          borderWidth: 1,
+          textStyle: { // 文字提示样式
+            color: '#fff',
+            fontSize: '12'
+          },
+          axisPointer: { // 坐标轴虚线
+            type: 'cross',
+            label: {
+                backgroundColor: 'rgb(242, 151, 1)'
+            }
+          },
+        },
         xAxis: {
           data: ["12:05", "12:06", "12:07", "12:08", "12:09", "12:10"],
         },
         yAxis: {},
         series: [
           {
-            name: "tem",
+            name: "湿度",
             type: "line",
             data: [23, 35, 45, 55, 66, 77],
+            label: { // 显示数值
+              show: true,
+              position: 'top',
+              color: '#FFFFFF',
+            },
+            itemStyle: {// 元素样式设置
+              normal: {
+                color: "#FFF",
+                lineStyle: {
+                  color: "rgb(242, 151, 1)"
+                }
+              }
+            },
           },
         ],
       });
       window.onresize = function () {//自适应大小
         myChartL2.resize();
       };
-
-    // 右侧part1
-    let myChartR1 = echarts.init(document.getElementById("exitPart1"));
+    },
+    // 左侧2part1
+    left2Part1(){
+    let myChartL21 = echarts.init(document.getElementById("enter2Part1"));
       // 绘制图表
-      myChartR1.setOption({
-        title: { text: "送风温度" },
-        tooltip: {},
+      myChartL21.setOption({
+        title: { text: "温度对比(°C)",textStyle:{color:'rgba(10, 191, 197)'} },
+        tooltip: { // 鼠标悬浮提示框显示 X和Y 轴数据
+          trigger: 'axis',
+          backgroundColor: 'rgba(10, 191, 197,.4)',
+          borderColor: 'rgba(32, 33, 36,0.20)',
+          borderWidth: 1,
+          textStyle: { // 文字提示样式
+            color: '#fff',
+            fontSize: '12'
+          },
+          axisPointer: { // 坐标轴虚线
+            type: 'cross',
+            label: {
+                backgroundColor: '#0abfc5'
+            }
+          },
+        },
+        xAxis: {
+          data: ["12:05", "12:06", "12:07", "12:08", "12:09", "12:10"],
+        },
+        yAxis: { },
+        series: [
+          {
+            name: "入口温度",
+            type: "line",
+            data: [36, 35, 34, 35, 33, 32],
+            label: { // 显示数值
+              show: true,
+              position: 'top',
+              color: '#FFFFFF',
+            },
+            itemStyle: {// 元素样式设置
+              normal: {
+                color: "#FFF",
+                lineStyle: {
+                  color: "rgb(51,192,197)"
+                }
+              }
+            },
+          },
+          {
+            name: "出口温度",
+            type: "line",
+            data: [29, 25, 26, 25, 23, 22],
+            label: { // 显示数值
+              show: true,
+              position: 'top',
+              color: '#FFFFFF',
+            },
+            itemStyle: {// 元素样式设置
+              normal: {
+                color: "#FFF",
+                lineStyle: {
+                  color: "rgb(242, 151, 1)"
+                }
+              }
+            },
+          },
+        ],
+      });
+      window.onresize = function () {//自适应大小
+        myChartL21.resize();
+      };
+    },
+    // 左侧2part2
+    left2Part2(){
+      let myChartL22 = echarts.init(document.getElementById("enter2Part2")); 
+      // 绘制图表
+      myChartL22.setOption({
+        title: { text: "温差(°C)" ,textStyle:{color:'rgb(242, 151, 1)'} },
+        tooltip: { // 鼠标悬浮提示框显示 X和Y 轴数据
+          trigger: 'axis',
+          backgroundColor: 'rgba(242, 151, 1,.4)',
+          borderColor: 'rgba(32, 33, 36,0.20)',
+          borderWidth: 1,
+          textStyle: { // 文字提示样式
+            color: '#fff',
+            fontSize: '12'
+          },
+          axisPointer: { // 坐标轴虚线
+            type: 'cross',
+            label: {
+                backgroundColor: 'rgb(242, 151, 1)'
+            }
+          },
+        },
         xAxis: {
           data: ["12:05", "12:06", "12:07", "12:08", "12:09", "12:10"],
         },
         yAxis: {},
         series: [
           {
-            name: "tem",
+            name: "温差值",
+            type: "line",
+            data: [7, 10, 8, 10, 10, 10],
+            label: { // 显示数值
+              show: true,
+              position: 'top',
+              color: '#FFFFFF',
+            },
+            itemStyle: {// 元素样式设置
+              normal: {
+                color: "#FFF",
+                lineStyle: {
+                  color: "rgb(242, 151, 1)"
+                }
+              }
+            },
+          },
+        ],
+      });
+      window.onresize = function () {//自适应大小
+        myChartL22.resize();
+      };
+    },
+    // 右侧part1
+    rightPart1(){
+    let myChartR1 = echarts.init(document.getElementById("exitPart1"));
+      // 绘制图表
+      myChartR1.setOption({
+        title: { text: "排风温度(°C)",textStyle:{color:'rgba(10, 191, 197)'} },
+        tooltip: { // 鼠标悬浮提示框显示 X和Y 轴数据
+          trigger: 'axis',
+          backgroundColor: 'rgba(10, 191, 197,.4)',
+          borderColor: 'rgba(32, 33, 36,0.20)',
+          borderWidth: 1,
+          textStyle: { // 文字提示样式
+            color: '#fff',
+            fontSize: '12'
+          },
+          axisPointer: { // 坐标轴虚线
+            type: 'cross',
+            label: {
+                backgroundColor: '#0abfc5'
+            }
+          },
+        },
+        xAxis: {
+          data: ["12:05", "12:06", "12:07", "12:08", "12:09", "12:10"],
+        },
+        yAxis: { },
+        series: [
+          {
+            name: "温度",
             type: "line",
             data: [36, 35, 34, 35, 33, 32],
+            label: { // 显示数值
+              show: true,
+              position: 'top',
+              color: '#FFFFFF',
+            },
+            itemStyle: {// 元素样式设置
+              normal: {
+                color: "#FFF",
+                lineStyle: {
+                  color: "rgb(51,192,197)"
+                }
+              }
+            },
           },
         ],
       });
       window.onresize = function () {//自适应大小
         myChartR1.resize();
       };
-
-    // 右侧part2  
+    },
+    // 右侧part2
+    rightPart2(){
     let myChartR2 = echarts.init(document.getElementById("exitPart2")); 
       // 绘制图表
       myChartR2.setOption({
-        title: { text: "送风湿度" },
-        tooltip: {},
+        title: { text: "排风湿度(RH)" ,textStyle:{color:'rgb(242, 151, 1)'} },
+        tooltip: { // 鼠标悬浮提示框显示 X和Y 轴数据
+          trigger: 'axis',
+          backgroundColor: 'rgba(242, 151, 1,.4)',
+          borderColor: 'rgba(32, 33, 36,0.20)',
+          borderWidth: 1,
+          textStyle: { // 文字提示样式
+            color: '#fff',
+            fontSize: '12'
+          },
+          axisPointer: { // 坐标轴虚线
+            type: 'cross',
+            label: {
+                backgroundColor: 'rgb(242, 151, 1)'
+            }
+          },
+        },
         xAxis: {
           data: ["12:05", "12:06", "12:07", "12:08", "12:09", "12:10"],
         },
         yAxis: {},
         series: [
           {
-            name: "tem",
+            name: "湿度",
             type: "line",
             data: [23, 35, 45, 55, 66, 77],
+            label: { // 显示数值
+              show: true,
+              position: 'top',
+              color: '#FFFFFF',
+            },
+            itemStyle: {// 元素样式设置
+              normal: {
+                color: "#FFF",
+                lineStyle: {
+                  color: "rgb(242, 151, 1)"
+                }
+              }
+            },
           },
         ],
       });
       window.onresize = function () {//自适应大小
         myChartR2.resize();
       };
-
-    });
+    },
+    // 右侧2part1
+    right2Part1(){
+    let myChartR21 = echarts.init(document.getElementById("exit2Part1"));
+      // 绘制图表
+      myChartR21.setOption({
+        title: { text: "湿度对比(RH)",textStyle:{color:'rgba(10, 191, 197)'} },
+        tooltip: { // 鼠标悬浮提示框显示 X和Y 轴数据
+          trigger: 'axis',
+          backgroundColor: 'rgba(10, 191, 197,.4)',
+          borderColor: 'rgba(32, 33, 36,0.20)',
+          borderWidth: 1,
+          textStyle: { // 文字提示样式
+            color: '#fff',
+            fontSize: '12'
+          },
+          axisPointer: { // 坐标轴虚线
+            type: 'cross',
+            label: {
+                backgroundColor: '#0abfc5'
+            }
+          },
+        },
+        xAxis: {
+          data: ["12:05", "12:06", "12:07", "12:08", "12:09", "12:10"],
+        },
+        yAxis: { },
+        series: [
+          {
+            name: "入口湿度度",
+            type: "line",
+            data: [36, 35, 34, 35, 33, 32],
+            label: { // 显示数值
+              show: true,
+              position: 'top',
+              color: '#FFFFFF',
+            },
+            itemStyle: {// 元素样式设置
+              normal: {
+                color: "#FFF",
+                lineStyle: {
+                  color: "rgb(51,192,197)"
+                }
+              }
+            },
+          },
+          {
+            name: "出口湿度",
+            type: "line",
+            data: [29, 25, 26, 25, 23, 22],
+            label: { // 显示数值
+              show: true,
+              position: 'top',
+              color: '#FFFFFF',
+            },
+            itemStyle: {// 元素样式设置
+              normal: {
+                color: "#FFF",
+                lineStyle: {
+                  color: "rgb(242, 151, 1)"
+                }
+              }
+            },
+          },
+        ],
+      });
+      window.onresize = function () {//自适应大小
+        myChartR21.resize();
+      };
+    },
+    // 右侧2part2
+    right2Part2(){
+    let myChartR22 = echarts.init(document.getElementById("exit2Part2")); 
+      // 绘制图表
+      myChartR22.setOption({
+        title: { text: "湿度差(RH)" ,textStyle:{color:'rgb(242, 151, 1)'} },
+        tooltip: { // 鼠标悬浮提示框显示 X和Y 轴数据
+          trigger: 'axis',
+          backgroundColor: 'rgba(242, 151, 1,.4)',
+          borderColor: 'rgba(32, 33, 36,0.20)',
+          borderWidth: 1,
+          textStyle: { // 文字提示样式
+            color: '#fff',
+            fontSize: '12'
+          },
+          axisPointer: { // 坐标轴虚线
+            type: 'cross',
+            label: {
+                backgroundColor: 'rgb(242, 151, 1)'
+            }
+          },
+        },
+        xAxis: {
+          data: ["12:05", "12:06", "12:07", "12:08", "12:09", "12:10"],
+        },
+        yAxis: {},
+        series: [
+          {
+            name: "湿度差值",
+            type: "line",
+            data: [7, 10, 8, 10, 10, 10],
+            label: { // 显示数值
+              show: true,
+              position: 'top',
+              color: '#FFFFFF',
+            },
+            itemStyle: {// 元素样式设置
+              normal: {
+                color: "#FFF",
+                lineStyle: {
+                  color: "rgb(242, 151, 1)"
+                }
+              }
+            },
+          },
+        ],
+      });
+      window.onresize = function () {//自适应大小
+        myChartR22.resize();
+      };
+    },
+  },
+  mounted(){
+    this.leftPart1();
+    this.leftPart2();
+    this.left2Part1();
+    this.left2Part2();
+    this.rightPart1();
+    this.rightPart2();
+    this.right2Part1();
+    this.right2Part2();
   }
 }
 </script>
