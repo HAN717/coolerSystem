@@ -35,7 +35,7 @@
                 <div class="sphere-bg"></div>
                 <div class="sum">
                     <span>运行时长</span>
-                    <p>00:32:31</p>
+                    <p>{{stayHour}}:{{stayMin}}:{{staySec}}</p>
                 </div>
             </div>
             <div class="cicle3"></div>
@@ -44,19 +44,19 @@
             <div class="cicle6"></div>
             <div class="cicle7"></div>
             <div class="cicle8">
-                <span>21.2°</span>
+                <span>21°C</span>
                 <p>送风温度</p>
             </div>
             <div class="cicle9">
-                <span>89%</span>
+                <span>89RH</span>
                 <p>湿度监测</p>
             </div>
             <div class="cicle10">
-                <span>23.4°</span>
+                <span>23°C</span>
                 <p>送风温度</p>
             </div>
             <div class="cicle11">
-                <span>89%</span>
+                <span>89RH</span>
                 <p>湿度监测</p>
             </div>
         </div>
@@ -95,6 +95,10 @@ export default {
   data() {
     return {
       isCompare:false,
+      stayHour:'00',  // 运行小时数
+      stayMin:'00',   // 分钟数 
+      staySec:'00',   // 秒数
+      staytimeGap:new Date().getTime()
     }
   },
   methods:{
@@ -181,21 +185,20 @@ export default {
         series: [
           {
             name: "湿度",
-            type: "line",
+            type: "bar",
             data: [23, 35, 45, 55, 66, 77],
             label: { // 显示数值
               show: true,
               position: 'top',
               color: '#FFFFFF',
             },
-            itemStyle: {// 元素样式设置
-              normal: {
-                color: "#FFF",
-                lineStyle: {
-                  color: "rgb(242, 151, 1)"
-                }
-              }
-            },
+            color: echarts.graphic.LinearGradient(0, 1, 0, 0, [{
+                offset: 0,
+                color: 'rgb(242, 151, 1, 0.1)' // 0% 处的颜色
+              },{
+                offset: 1,
+                color: "rgb(242, 151, 1, .7)" // 100% 处的颜色
+            }], false),
           },
         ],
       });
@@ -316,6 +319,27 @@ export default {
                 }
               }
             },
+            areaStyle: {
+              //区域填充渐变颜色
+              color: {
+                type: "linear",
+                x: 0,
+                y: 0,
+                x2: 0,
+                y2: 1,
+                colorStops: [
+                  {
+                    offset: 0,
+                    color: "rgba(242, 151, 1,0.7)", // 0% 处的颜色
+                  },
+                  {
+                    offset: 1,
+                    color: "rgba(242, 151, 1,0)", // 100% 处的颜色
+                  },
+                ],
+                global: false, // 缺省为 false
+              },
+            },
           },
         ],
       });
@@ -403,21 +427,20 @@ export default {
         series: [
           {
             name: "湿度",
-            type: "line",
+            type: "bar",
             data: [23, 35, 45, 55, 66, 77],
             label: { // 显示数值
               show: true,
               position: 'top',
               color: '#FFFFFF',
             },
-            itemStyle: {// 元素样式设置
-              normal: {
-                color: "#FFF",
-                lineStyle: {
-                  color: "rgb(242, 151, 1)"
-                }
-              }
-            },
+            color: echarts.graphic.LinearGradient(0, 1, 0, 0, [{
+                offset: 0,
+                color: 'rgb(242, 151, 1, 0.1)' // 0% 处的颜色
+              },{
+                offset: 1,
+                color: "rgb(242, 151, 1, .7)" // 100% 处的颜色
+            }], false),
           },
         ],
       });
@@ -453,7 +476,7 @@ export default {
         yAxis: { },
         series: [
           {
-            name: "入口湿度度",
+            name: "入口湿度",
             type: "line",
             data: [36, 35, 34, 35, 33, 32],
             label: { // 显示数值
@@ -538,6 +561,27 @@ export default {
                 }
               }
             },
+            areaStyle: {
+              //区域填充渐变颜色
+              color: {
+                type: "linear",
+                x: 0,
+                y: 0,
+                x2: 0,
+                y2: 1,
+                colorStops: [
+                  {
+                    offset: 0,
+                    color: "rgba(242, 151, 1,0.7)", // 0% 处的颜色
+                  },
+                  {
+                    offset: 1,
+                    color: "rgba(242, 151, 1,0)", // 100% 处的颜色
+                  },
+                ],
+                global: false, // 缺省为 false
+              },
+            },
           },
         ],
       });
@@ -555,7 +599,29 @@ export default {
     this.rightPart2();
     this.right2Part1();
     this.right2Part2();
-  }
+    var that = this
+    var timer = ''
+    timer = window.setInterval(function logname() {
+        // let staytimeGap = new Date().getTime() - new Date('2023-01-01 00:00:00').getTime();
+        let leave = (new Date().getTime() - that.staytimeGap) % (3600 * 1000 * 24);
+        that.stayHour = Math.floor(leave / (3600 * 1000)).toString().padStart(2, 0);
+        let leave1 = leave % (3600 * 1000);
+        that.stayMin = Math.floor(leave1 / (60 * 1000)).toString().padStart(2, 0);
+        let leave2 = leave1 % (60 * 1000);
+        that.staySec = Math.floor(leave2 / 1000).toString().padStart(2, 0);
+    }, 1000);
+    
+    // 防止误触关闭网页
+    window.onbeforeunload = e => {
+	    e = e || window.event
+	    // 兼容IE8和Firefox 4之前的版本
+	    if (e) {
+	      e.returnValue = '关闭提示'
+	    }
+	    // Chrome, Safari, Firefox 4+, Opera 12+ , IE 9+
+	    return '关闭提示'
+    }
+  },
 }
 </script>
 <style>
