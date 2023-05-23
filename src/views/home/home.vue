@@ -43,6 +43,7 @@
       <div class="sphere">
         <div class="sphere-bg"></div>
         <div class="sum">
+          <img src="../../assets/img/logo.png" style="width: 160px;margin: 110px 0 0 110px;">
           <!-- <span>运行时长</span> -->
           <!-- <p>{{ stayHour }}:{{ stayMin }}:{{ staySec }}</p> -->
         </div>
@@ -53,21 +54,21 @@
       <div class="cicle6"></div>
       <div class="cicle7"></div>
       <div class="cicle8" style="text-align: center">
-        <span style="margin-left: -4px">{{ inlet_tem }}°C</span>
+        <span style="margin-left: -4px">{{ outlet_tem[outlet_tem.length-1] }}°C</span>
         <p>送风温度</p>
       </div>
       <div class="cicle9">
-        <span>{{ inlet_humidity }}%</span>
+        <span>{{ inlet_humidity[inlet_humidity.length-1] }}%</span>
         <!-- <span>{{currentShidu1}}%</span> -->
         <p>进口湿度</p>
       </div>
       <div class="cicle10" style="text-align: center">
-        <span style="margin-left: -4px">{{ outlet_tem }}°C</span>
+        <span style="margin-left: -4px">{{ inlet_tem[inlet_tem.length-1] }}°C</span>
         <p>进风温度</p>
       </div>
       <div class="cicle11">
         <!-- <span>{{currentShidu2}}%</span> -->
-        <span>{{ outlet_humidity }}%</span>
+        <span>{{ outlet_humidity[outlet_humidity.length-1] }}%</span>
         <p>出口湿度</p>
       </div>
     </div>
@@ -106,72 +107,30 @@ import axios from 'axios'
 export default {
   data() {
     return {
-      isCompare: false,
-      stayHour: "00", // 运行小时数
-      stayMin: "00", // 分钟数
-      staySec: "00", // 秒数
-      staytimeGap: new Date().getTime(),
-      humidity: null,
-      temperature: null,
-      inlet_humidity: 0,
-      inlet_tem: 0,
-      outlet_tem: 0,
-      outlet_humidity: 0,
-      airTimer: null,
-      changeTime:3000,
-      csvData: [],
-      historyData:[],
-      historyTime:[],
-      metaTime:1,
-      temDiff: [
-        4.5, 5.1, 5, 5.2, 4, 4.4, 4.4, 4.7, 4.8, 4.8, 4.8, 5.6, 4.8, 5.6, 4.5,
-        4.5, 4.7, 4.3, 4.2,
-      ],
-      tem1: [
-        27.2, 28.3, 28.2, 28.3, 26.7, 27.2, 27.2, 28.2, 28.1, 28.1, 28, 29.5,
-        28.1, 29, 27.7, 27.5, 28.1, 27.2, 27.2,
-      ],
-      tem2: [
-        22.7, 23.2, 23.2, 23.1, 22.7, 22.8, 22.8, 23.5, 23.3, 23.3, 23.2, 23.9,
-        23.3, 23.4, 23.2, 23, 23.4, 22.9, 23,
-      ],
-      shidu1: [
-        48.9, 48.9, 48.9, 48.9, 48.9, 48.9, 48.9, 48.9, 49.0, 49.0, 49.0, 49.0,
-        49.0, 49.0, 49.1, 49.1, 49.1, 49.1, 49.1, 49.1, 49.1, 49.1, 49.1, 49.1,
-        49.2, 49.2, 49.2, 49.2, 49.3, 49.3, 49.3, 49.4, 49.4, 49.4, 49.4, 49.4,
-        49.4, 49.5, 49.5, 49.5, 49.5,
-      ],
-      shidu2: [
-        48.8, 48.8, 48.8, 48.8, 48.8, 48.8, 48.8, 48.8, 48.9, 48.9, 48.9, 48.9,
-        48.9, 48.9, 48.9, 48.9, 49.0, 49.0, 49.0, 49.0, 49.0, 49.0, 49.0, 49.1,
-        49.1, 49.1, 49.1, 49.1, 49.2, 49.2, 49.2, 49.2, 49.2, 49.3, 49.3, 49.3,
-        49.3, 49.3, 49.4, 49.4, 49.5,
-      ],
-      shiducha: [
-        0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1,
-        0.2, 0.2, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0, 0.1, 0.1, 0.1, 0.1, 0.1,
-        0.1, 0.1, 0.2, 0.2, 0.1, 0.1, 0.1, 0.1, 0.2, 0.1, 0.1, 0,
-      ],
-      airVR: [
+      isCompare: false, // 是否展示数据对比 （bool）
+      stayHour: "00",   // 运行小时数
+      stayMin: "00",    // 分钟数
+      staySec: "00",    // 秒数
+      staytimeGap: new Date().getTime(), // 系统运行时间
+      inlet_humidity:[],   // 入口湿度数据数组
+      inlet_tem: [],       // 入口温度数据数组
+      outlet_tem: [],      // 出口温度数据数组
+      outlet_humidity: [], // 出口湿度数据数组
+      tem_diff:[],         // 出入口温度差
+      humidity_diff:[],    // 出入口湿度差
+      airTimer: null,  // 当前风量比
+      changeTime:3000, // 所有图例渲染更新时间（1000ms = 1s）
+      max_length: 5,   // 所有展示数据最大长度
+      historyTime:[],  // 当前展示数据的所属时间（次）
+      metaTime:1,      // 最小测量时间单位（次）
+      airVR: [         // 风量比数据数组
         1.6, 1.6, 1.6, 1.7, 1.8, 1.8, 1.8, 2.4, 2.5, 2.6, 2.8, 2.8, 3.0, 3.1,
         3.1, 3.1, 3.1, 3.1, 3.2,
       ],
-      time: [
-        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-        21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38,
-        39, 40, 41,
-      ],
-      currentTem1: 0,
-      currentTem2: 0,
-      currentShidu1: 0,
-      currentShidu2: 0,
-      currentTemDiff: 0,
       currentAirVR: 0.0,
-      index: 0,
     };
   },
   methods: {
-
     // 切换页面数据内容
     changePart() {
       this.isCompare = !this.isCompare;
@@ -180,31 +139,57 @@ export default {
     loadData() {
         axios.get('/src/assets/data.csv')
         .then(response => {
-          // 处理CSV数据，将其存储到csvData数组中
-          this.inlet_humidity = response.data.substring(1, 3);
-          this.inlet_tem = response.data.substring(4, 6);
-          this.outlet_humidity = response.data.substring(7, 9);
-          this.outlet_tem = response.data.substring(10, 12);
+
+          // 处理CSV数据，分割取得，将其新数据存储到局部变量
+          // let new_inlet_humidity = response.data.substring(1, 3);   // 入口湿度
+          // let new_inlet_tem = response.data.substring(4, 6);        // 入口温度
+          // let new_outlet_humidity = response.data.substring(7, 9);  // 出口湿度
+          // let new_outlet_tem = response.data.substring(10, 12);     // 出口温度
+          let new_outlet_humidity = response.data.substring(1, 3);   // 入口湿度
+          let new_outlet_tem = response.data.substring(4, 6);        // 入口温度
+          let new_inlet_humidity = response.data.substring(7, 9);  // 出口湿度
+          let new_inlet_tem = response.data.substring(10, 12);     // 出口温度
+          let new_tem_diff = new_inlet_tem - new_outlet_tem         // 出入口温度差
+          let new_humidity_diff = new_inlet_humidity - new_outlet_humidity   // 出入口温度差
           
-          // 更新数据数组
-          let newData = 0
-          newData = this.inlet_humidity
-          if (this.historyData.length < 5) {
+          // 更新数据数组，最大存入5个数据，若达到5个则数据前移一位，第五位存最新数据
+          if (this.inlet_humidity.length < this.max_length) {
+
             // 如果数据数量小于5，直接添加到数组末尾
-            this.historyData.push(newData);
+            this.inlet_humidity.push(new_inlet_humidity);
+            this.inlet_tem.push(new_inlet_tem);
+            this.outlet_humidity.push(new_outlet_humidity);
+            this.outlet_tem.push(new_outlet_tem);
+            this.tem_diff.push(new_tem_diff);
+            this.humidity_diff.push(new_humidity_diff);
+            
           } else {
+
             // 如果数据数量已经是5个，先移除第一个数据，然后将新数据添加到数组末尾
-            this.historyData.shift();
-            this.historyData.push(newData);
+            this.inlet_humidity.shift();
+            this.inlet_humidity.push(new_inlet_humidity);
+            this.inlet_tem.shift();
+            this.inlet_tem.push(new_inlet_tem);
+            this.outlet_humidity.shift()
+            this.outlet_humidity.push(new_outlet_humidity);
+            this.outlet_tem.shift();
+            this.outlet_tem.push(new_outlet_tem);
+            this.tem_diff.shift()
+            this.tem_diff.push(new_tem_diff);
+            this.humidity_diff.shift();
+            this.humidity_diff.push(new_humidity_diff);
           }
+
+          // 更新数据检测时间
           let time = 0
+          // 同样只取五个
           if(this.historyTime.length!= 0){
             time = this.metaTime + this.historyTime[this.historyTime.length-1]
           }
           else{
             time += 1
           }
-          if (this.historyTime.length < 5) {
+          if (this.historyTime.length < this.max_length) {
             this.historyTime.push(time)
           } else {
             this.historyTime.shift();
@@ -212,6 +197,7 @@ export default {
           }
 
         })
+        // 抛出异常
         .catch(error => {
           console.error('Failed to fetch CSV data:', error);
         });
@@ -258,7 +244,7 @@ export default {
           },
         },
         xAxis: {
-          data: this.time,
+          data: this.historyTime,
         },
         yAxis: {},
         dataZoom: [
@@ -274,7 +260,7 @@ export default {
           {
             name: "温度",
             type: "line",
-            data: this.tem1,
+            data: this.inlet_tem,
             label: {
               // 显示数值
               show: true,
@@ -299,18 +285,7 @@ export default {
         //自适应大小
         myChartL1.resize();
       };
-      let index = 0;
       setInterval(() => {
-        index = option.dataZoom[0].endValue;
-        if (option.dataZoom[0].endValue == option.series[0].data.length - 1) {
-          option.dataZoom[0].endValue = 4;
-          this.currentTem1 = this.tem1[index];
-          option.dataZoom[0].startValue = 0;
-        } else {
-          this.currentTem1 = this.tem1[index];
-          option.dataZoom[0].endValue = option.dataZoom[0].endValue + 1;
-          option.dataZoom[0].startValue = option.dataZoom[0].startValue + 1;
-        }
         myChartL1.setOption(option);
       }, this.changeTime);
     },
@@ -370,7 +345,7 @@ export default {
           {
             name: "湿度",
             type: "bar",
-            data: this.historyData,
+            data: this.inlet_humidity,
             label: {
               // 显示数值
               show: true,
@@ -458,7 +433,7 @@ export default {
           },
         },
         xAxis: {
-          data: this.time,
+          data: this.historyTime,
         },
         yAxis: {},
         dataZoom: [
@@ -474,7 +449,7 @@ export default {
           {
             name: "温度",
             type: "line",
-            data: this.tem2,
+            data: this.outlet_tem,
             label: {
               // 显示数值
               show: true,
@@ -498,18 +473,7 @@ export default {
         //自适应大小
         myChartR1.resize();
       };
-      let index = 0;
       setInterval(() => {
-        index = option.dataZoom[0].endValue;
-        if (option.dataZoom[0].endValue == option.series[0].data.length - 1) {
-          option.dataZoom[0].endValue = 4;
-          this.currentTem2 = this.tem2[index];
-          option.dataZoom[0].startValue = 0;
-        } else {
-          this.currentTem2 = this.tem2[index];
-          option.dataZoom[0].endValue = option.dataZoom[0].endValue + 1;
-          option.dataZoom[0].startValue = option.dataZoom[0].startValue + 1;
-        }
         myChartR1.setOption(option);
       }, this.changeTime);
     },
@@ -562,14 +526,14 @@ export default {
           },
         ],
         xAxis: {
-          data: this.time,
+          data: this.historyTime,
         },
         yAxis: {},
         series: [
           {
             name: "湿度",
             type: "bar",
-            data: this.shidu2,
+            data: this.outlet_humidity,
             label: {
               // 显示数值
               show: true,
@@ -601,18 +565,7 @@ export default {
         //自适应大小
         myChartR2.resize();
       };
-      let index = 0;
       setInterval(() => {
-        index = option.dataZoom[0].endValue;
-        if (option.dataZoom[0].endValue == option.series[0].data.length - 1) {
-          option.dataZoom[0].endValue = 4;
-          this.currentshidu1 = this.shidu1[index];
-          option.dataZoom[0].startValue = 0;
-        } else {
-          this.currentshidu1 = this.shidu1[index];
-          option.dataZoom[0].endValue = option.dataZoom[0].endValue + 1;
-          option.dataZoom[0].startValue = option.dataZoom[0].startValue + 1;
-        }
         myChartR2.setOption(option);
       }, this.changeTime);
     },
@@ -658,7 +611,7 @@ export default {
           },
         },
         xAxis: {
-          data: this.time,
+          data: this.historyTime,
         },
         dataZoom: [
           {
@@ -674,7 +627,7 @@ export default {
           {
             name: "入口温度",
             type: "line",
-            data: this.tem1,
+            data: this.inlet_tem,
             label: {
               // 显示数值
               show: true,
@@ -694,7 +647,7 @@ export default {
           {
             name: "出口温度",
             type: "line",
-            data: this.tem2,
+            data: this.outlet_tem,
             label: {
               // 显示数值
               show: true,
@@ -718,15 +671,7 @@ export default {
         //自适应大小
         myChartL21.resize();
       };
-      let index = 0;
       setInterval(() => {
-        if (option.dataZoom[0].endValue == option.series[0].data.length - 1) {
-          option.dataZoom[0].endValue = 4;
-          option.dataZoom[0].startValue = 0;
-        } else {
-          option.dataZoom[0].endValue = option.dataZoom[0].endValue + 1;
-          option.dataZoom[0].startValue = option.dataZoom[0].startValue + 1;
-        }
         myChartL21.setOption(option);
       }, this.changeTime);
     },
@@ -766,7 +711,7 @@ export default {
           },
         },
         xAxis: {
-          data: this.time,
+          data: this.historyTime,
         },
         dataZoom: [
           {
@@ -782,7 +727,7 @@ export default {
           {
             name: "温差值",
             type: "line",
-            data: this.temDiff,
+            data: this.tem_diff,
             label: {
               // 显示数值
               show: true,
@@ -828,13 +773,6 @@ export default {
         myChartL22.resize();
       };
       setInterval(() => {
-        if (option.dataZoom[0].endValue == option.series[0].data.length - 1) {
-          option.dataZoom[0].endValue = 4;
-          option.dataZoom[0].startValue = 0;
-        } else {
-          option.dataZoom[0].endValue = option.dataZoom[0].endValue + 1;
-          option.dataZoom[0].startValue = option.dataZoom[0].startValue + 1;
-        }
         myChartL22.setOption(option);
       }, this.changeTime);
     },
@@ -878,7 +816,7 @@ export default {
           },
         },
         xAxis: {
-          data: this.time,
+          data: this.historyTime,
         },
         dataZoom: [
           {
@@ -890,14 +828,14 @@ export default {
           },
         ],
         yAxis: {
-          min: 48,
-          max: 49.7,
+          // min: 48,
+          // max: 49.7,
         },
         series: [
           {
             name: "入口湿度",
             type: "line",
-            data: this.shidu1,
+            data: this.inlet_humidity,
             label: {
               // 显示数值
               show: true,
@@ -917,7 +855,7 @@ export default {
           {
             name: "出口湿度",
             type: "line",
-            data: this.shidu2,
+            data: this.outlet_humidity,
             label: {
               // 显示数值
               show: true,
@@ -941,15 +879,7 @@ export default {
         //自适应大小
         myChartR21.resize();
       };
-      let index = 0;
       setInterval(() => {
-        if (option.dataZoom[0].endValue == option.series[0].data.length - 1) {
-          option.dataZoom[0].endValue = 4;
-          option.dataZoom[0].startValue = 0;
-        } else {
-          option.dataZoom[0].endValue = option.dataZoom[0].endValue + 1;
-          option.dataZoom[0].startValue = option.dataZoom[0].startValue + 1;
-        }
         myChartR21.setOption(option);
       }, this.changeTime);
     },
@@ -989,7 +919,7 @@ export default {
           },
         },
         xAxis: {
-          data: this.time,
+          data: this.historyTime,
         },
         dataZoom: [
           {
@@ -1001,14 +931,14 @@ export default {
           },
         ],
         yAxis: {
-          min: 0,
-          max: 0.25,
+          // min: 0,
+          // max: 0.25,
         },
         series: [
           {
             name: "湿度差值",
             type: "line",
-            data: this.shiducha,
+            data: this.humidity_diff,
             label: {
               // 显示数值
               show: true,
@@ -1054,13 +984,6 @@ export default {
         myChartR22.resize();
       };
       setInterval(() => {
-        if (option.dataZoom[0].endValue == option.series[0].data.length - 1) {
-          option.dataZoom[0].endValue = 4;
-          option.dataZoom[0].startValue = 0;
-        } else {
-          option.dataZoom[0].endValue = option.dataZoom[0].endValue + 1;
-          option.dataZoom[0].startValue = option.dataZoom[0].startValue + 1;
-        }
         myChartR22.setOption(option);
       }, this.changeTime);
     },
