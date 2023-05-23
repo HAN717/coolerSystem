@@ -13,7 +13,7 @@
   <div class="main">
     <!-- content -->
     <!-- left -->
-    <div id="left" v-show="isCompare == false">
+    <div id="left" v-show="is_compare == false">
       <!-- 入风口 -->
       <div id="enterPart">
         <div id="leftPartTitle">冷却器入口处</div>
@@ -22,7 +22,7 @@
       </div>
     </div>
     <!-- left2 -->
-    <div id="left2" v-show="isCompare == true">
+    <div id="left2" v-show="is_compare == true">
       <!-- 入风口 -->
       <div id="enterPart">
         <div id="leftPartTitle">冷却器出入口温度比较</div>
@@ -35,17 +35,15 @@
       <canvas class="rain"></canvas>
       <div id="ratio">
         <h3>
-          当前风量比:&nbsp;<span>{{ currentAirVR }}</span>
+          当前风量比:&nbsp;<span>{{ currentair_VR }}</span>
         </h3>
-        <!-- <p style="color:white">湿度：{{ humidity }}</p> -->
-        <!-- <p style="color:white">温度：{{ temperature }}</p> -->
       </div>
       <div class="sphere">
         <div class="sphere-bg"></div>
         <div class="sum">
           <img src="../../assets/img/logo.png" style="width: 160px;margin: 110px 0 0 110px;">
           <!-- <span>运行时长</span> -->
-          <!-- <p>{{ stayHour }}:{{ stayMin }}:{{ staySec }}</p> -->
+          <!-- <p>{{ stay_hour }}:{{ stay_min }}:{{ stay_sec }}</p> -->
         </div>
       </div>
       <div class="cicle3"></div>
@@ -59,7 +57,6 @@
       </div>
       <div class="cicle9">
         <span>{{ inlet_humidity[inlet_humidity.length-1] }}%</span>
-        <!-- <span>{{currentShidu1}}%</span> -->
         <p>进口湿度</p>
       </div>
       <div class="cicle10" style="text-align: center">
@@ -67,13 +64,12 @@
         <p>进风温度</p>
       </div>
       <div class="cicle11">
-        <!-- <span>{{currentShidu2}}%</span> -->
         <span>{{ outlet_humidity[outlet_humidity.length-1] }}%</span>
         <p>出口湿度</p>
       </div>
     </div>
     <!-- riht -->
-    <div id="right" v-show="isCompare == false">
+    <div id="right" v-show="is_compare == false">
       <!-- 出风口 -->
       <div id="exitPart">
         <div id="rightPartTitle">冷却器出口处</div>
@@ -82,7 +78,7 @@
       </div>
     </div>
     <!-- right2 -->
-    <div id="right2" v-show="isCompare == true">
+    <div id="right2" v-show="is_compare == true">
       <!-- 出风口 -->
       <div id="exitPart">
         <div id="rightPartTitle">冷却器出入口湿度比较</div>
@@ -93,10 +89,10 @@
   </div>
   <!-- 底部模块 -->
   <div class="bottom" @click="changePart()">
-    <h5 v-show="isCompare == false"><span>数据状况</span></h5>
-    <p v-show="isCompare == false">Data Status</p>
-    <h5 v-show="isCompare == true"><span>数据对比</span></h5>
-    <p v-show="isCompare == true">Data Compare</p>
+    <h5 v-show="is_compare == false"><span>数据状况</span></h5>
+    <p v-show="is_compare == false">Data Status</p>
+    <h5 v-show="is_compare == true"><span>数据对比</span></h5>
+    <p v-show="is_compare == true">Data Compare</p>
   </div>
 </template>
 <script>
@@ -107,33 +103,33 @@ import axios from 'axios'
 export default {
   data() {
     return {
-      isCompare: false, // 是否展示数据对比 （bool）
-      stayHour: "00",   // 运行小时数
-      stayMin: "00",    // 分钟数
-      staySec: "00",    // 秒数
-      staytimeGap: new Date().getTime(), // 系统运行时间
+      is_compare: false, // 是否展示数据对比 （bool）
+      stay_hour: "00",   // 运行小时数
+      stay_min: "00",    // 分钟数
+      stay_sec: "00",    // 秒数
+      staytime_gap: new Date().getTime(), // 系统运行时间
       inlet_humidity:[],   // 入口湿度数据数组
       inlet_tem: [],       // 入口温度数据数组
       outlet_tem: [],      // 出口温度数据数组
       outlet_humidity: [], // 出口湿度数据数组
       tem_diff:[],         // 出入口温度差
       humidity_diff:[],    // 出入口湿度差
-      airTimer: null,  // 当前风量比
-      changeTime:3000, // 所有图例渲染更新时间（1000ms = 1s）
+      air_timer: null,  // 当前风量比
+      change_time:3000, // 所有图例渲染更新时间（1000ms = 1s）
       max_length: 5,   // 所有展示数据最大长度
-      historyTime:[],  // 当前展示数据的所属时间（次）
-      metaTime:1,      // 最小测量时间单位（次）
-      airVR: [         // 风量比数据数组
+      history_time:[],  // 当前展示数据的所属时间（次）
+      meta_time:1,      // 最小测量时间单位（次）
+      air_VR: [         // 风量比数据数组
         1.6, 1.6, 1.6, 1.7, 1.8, 1.8, 1.8, 2.4, 2.5, 2.6, 2.8, 2.8, 3.0, 3.1,
         3.1, 3.1, 3.1, 3.1, 3.2,
       ],
-      currentAirVR: 0.0,
+      currentair_VR: 0.0,
     };
   },
   methods: {
     // 切换页面数据内容
     changePart() {
-      this.isCompare = !this.isCompare;
+      this.is_compare = !this.is_compare;
     },
     // 动态获取并更新、存储数据
     loadData() {
@@ -183,17 +179,17 @@ export default {
           // 更新数据检测时间
           let time = 0
           // 同样只取五个
-          if(this.historyTime.length!= 0){
-            time = this.metaTime + this.historyTime[this.historyTime.length-1]
+          if(this.history_time.length!= 0){
+            time = this.meta_time + this.history_time[this.history_time.length-1]
           }
           else{
             time += 1
           }
-          if (this.historyTime.length < this.max_length) {
-            this.historyTime.push(time)
+          if (this.history_time.length < this.max_length) {
+            this.history_time.push(time)
           } else {
-            this.historyTime.shift();
-            this.historyTime.push(time)
+            this.history_time.shift();
+            this.history_time.push(time)
           }
 
         })
@@ -244,7 +240,7 @@ export default {
           },
         },
         xAxis: {
-          data: this.historyTime,
+          data: this.history_time,
         },
         yAxis: {},
         dataZoom: [
@@ -287,7 +283,7 @@ export default {
       };
       setInterval(() => {
         myChartL1.setOption(option);
-      }, this.changeTime);
+      }, this.change_time);
     },
     // 入口湿度图例
     inletHumidity() {
@@ -329,7 +325,7 @@ export default {
           },
         },
         xAxis: {
-          data: this.historyTime,
+          data: this.history_time,
         },
         yAxis: {},
         dataZoom: [
@@ -390,7 +386,7 @@ export default {
         //   option.dataZoom[0].startValue = option.dataZoom[0].startValue + 1;
         // }
         myChartL2.setOption(option);
-      }, this.changeTime);
+      }, this.change_time);
     },
     // 出口温度图例
     exhaustTem() {
@@ -433,7 +429,7 @@ export default {
           },
         },
         xAxis: {
-          data: this.historyTime,
+          data: this.history_time,
         },
         yAxis: {},
         dataZoom: [
@@ -475,7 +471,7 @@ export default {
       };
       setInterval(() => {
         myChartR1.setOption(option);
-      }, this.changeTime);
+      }, this.change_time);
     },
     // 出口湿度图例
     exhaustHumidity() {
@@ -526,7 +522,7 @@ export default {
           },
         ],
         xAxis: {
-          data: this.historyTime,
+          data: this.history_time,
         },
         yAxis: {},
         series: [
@@ -567,7 +563,7 @@ export default {
       };
       setInterval(() => {
         myChartR2.setOption(option);
-      }, this.changeTime);
+      }, this.change_time);
     },
 
     // ************************************  数据对比  ************************************
@@ -611,7 +607,7 @@ export default {
           },
         },
         xAxis: {
-          data: this.historyTime,
+          data: this.history_time,
         },
         dataZoom: [
           {
@@ -673,7 +669,7 @@ export default {
       };
       setInterval(() => {
         myChartL21.setOption(option);
-      }, this.changeTime);
+      }, this.change_time);
     },
     // 温度差图例
     temDifference() {
@@ -711,7 +707,7 @@ export default {
           },
         },
         xAxis: {
-          data: this.historyTime,
+          data: this.history_time,
         },
         dataZoom: [
           {
@@ -774,7 +770,7 @@ export default {
       };
       setInterval(() => {
         myChartL22.setOption(option);
-      }, this.changeTime);
+      }, this.change_time);
     },
     // 出入口湿度对比图例
     humidityContrast() {
@@ -816,7 +812,7 @@ export default {
           },
         },
         xAxis: {
-          data: this.historyTime,
+          data: this.history_time,
         },
         dataZoom: [
           {
@@ -881,7 +877,7 @@ export default {
       };
       setInterval(() => {
         myChartR21.setOption(option);
-      }, this.changeTime);
+      }, this.change_time);
     },
     // 湿度差图例
     humidityDifference() {
@@ -919,7 +915,7 @@ export default {
           },
         },
         xAxis: {
-          data: this.historyTime,
+          data: this.history_time,
         },
         dataZoom: [
           {
@@ -985,20 +981,20 @@ export default {
       };
       setInterval(() => {
         myChartR22.setOption(option);
-      }, this.changeTime);
+      }, this.change_time);
     },
 
     // 展示风量比
-    showAirVR() {
-      this.airTimer = setInterval(() => {
-        if (this.index == this.airVR.length) {
+    showair_VR() {
+      this.air_timer = setInterval(() => {
+        if (this.index == this.air_VR.length) {
           this.index = 0;
         } else {
           this.index++;
         }
-        let airVR = this.airVR[this.index];
-        this.currentAirVR = airVR;
-      }, this.changeTime);
+        let air_VR = this.air_VR[this.index];
+        this.currentair_VR = air_VR;
+      }, this.change_time);
     },
 
   },
@@ -1012,22 +1008,22 @@ export default {
     this.exhaustHumidity();
     this.humidityContrast();
     this.humidityDifference();
-    this.showAirVR();
+    this.showair_VR();
     var that = this;
     var timer = "";
     timer = window.setInterval(function logname() {
-      // let staytimeGap = new Date().getTime() - new Date('2023-01-01 00:00:00').getTime();
+      // let staytime_gap = new Date().getTime() - new Date('2023-01-01 00:00:00').getTime();
       let leave =
-        (new Date().getTime() - that.staytimeGap) % (3600 * 1000 * 24);
-      that.stayHour = Math.floor(leave / (3600 * 1000))
+        (new Date().getTime() - that.staytime_gap) % (3600 * 1000 * 24);
+      that.stay_hour = Math.floor(leave / (3600 * 1000))
         .toString()
         .padStart(2, 0);
       let leave1 = leave % (3600 * 1000);
-      that.stayMin = Math.floor(leave1 / (60 * 1000))
+      that.stay_min = Math.floor(leave1 / (60 * 1000))
         .toString()
         .padStart(2, 0);
       let leave2 = leave1 % (60 * 1000);
-      that.staySec = Math.floor(leave2 / 1000)
+      that.stay_sec = Math.floor(leave2 / 1000)
         .toString()
         .padStart(2, 0);
     }, 1000);
@@ -1044,7 +1040,7 @@ export default {
     };
   },
   beforeDestroy() {
-    clearInterval(this.airTimer);
+    clearInterval(this.air_timer);
   },
 };
 </script>
