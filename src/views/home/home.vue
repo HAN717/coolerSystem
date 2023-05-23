@@ -43,8 +43,8 @@
       <div class="sphere">
         <div class="sphere-bg"></div>
         <div class="sum">
-          <span>运行时长</span>
-          <p>{{ stayHour }}:{{ stayMin }}:{{ staySec }}</p>
+          <!-- <span>运行时长</span> -->
+          <!-- <p>{{ stayHour }}:{{ stayMin }}:{{ staySec }}</p> -->
         </div>
       </div>
       <div class="cicle3"></div>
@@ -52,24 +52,26 @@
       <div class="cicle5"></div>
       <div class="cicle6"></div>
       <div class="cicle7"></div>
-      <div class="cicle8" style="text-align: center;">
-        <span style="margin-left: -4px;">{{currentTem1}}°C</span>
+      <div class="cicle8" style="text-align: center">
+        <span style="margin-left: -4px">{{ inlet_tem }}°C</span>
         <p>送风温度</p>
       </div>
       <div class="cicle9">
-        <span>89RH</span>
-        <p>湿度监测</p>
+        <span>{{ inlet_humidity }}%</span>
+        <!-- <span>{{currentShidu1}}%</span> -->
+        <p>进口湿度</p>
       </div>
-      <div class="cicle10" style="text-align: center;">
-        <span style="margin-left: -4px;">{{currentTem2}}°C</span>
-        <p>入风温度</p>
+      <div class="cicle10" style="text-align: center">
+        <span style="margin-left: -4px">{{ outlet_tem }}°C</span>
+        <p>进风温度</p>
       </div>
       <div class="cicle11">
-        <span>89RH</span>
-        <p>湿度监测</p>
+        <!-- <span>{{currentShidu2}}%</span> -->
+        <span>{{ outlet_humidity }}%</span>
+        <p>出口湿度</p>
       </div>
     </div>
-    <!-- right -->
+    <!-- riht -->
     <div id="right" v-show="isCompare == false">
       <!-- 出风口 -->
       <div id="exitPart">
@@ -100,7 +102,7 @@
 import "./main.css";
 import "../../assets/js/main";
 import * as echarts from "echarts";
-import * as d3 from "d3";
+import axios from 'axios'
 export default {
   data() {
     return {
@@ -111,74 +113,116 @@ export default {
       staytimeGap: new Date().getTime(),
       humidity: null,
       temperature: null,
+      inlet_humidity: 0,
+      inlet_tem: 0,
+      outlet_tem: 0,
+      outlet_humidity: 0,
       airTimer: null,
+      changeTime:3000,
+      csvData: [],
+      historyData:[],
+      historyTime:[],
+      metaTime:1,
       temDiff: [
-        3.1, 3.5, 3.3, 2.8, 2.9, 3.4, 1.8, 2.5, 1.9, 3.1, 3.2, 2.6, 2, 2, 3.2,
-        2.5, 2.2, 2.3, 2.2, 2.4, 1.5, 1.9, 1.5, 1.8, 1.4, 1.6, 1.9, 1.9, 2, 1.9,
-        2.2, 2.2, 2.2, 2.2, 2, 1.7, 2.1, 2.5, 2, 2.9, 1.6,
+        4.5, 5.1, 5, 5.2, 4, 4.4, 4.4, 4.7, 4.8, 4.8, 4.8, 5.6, 4.8, 5.6, 4.5,
+        4.5, 4.7, 4.3, 4.2,
       ],
       tem1: [
-        20.6, 20.6, 20.5, 20.2, 20.2, 20.5, 19.2, 19.1, 19.1, 20.1, 20.2, 19.0,
-        18.2, 18.2, 20.5, 18.5, 18.2, 18.1, 18.5, 18.5, 19.5, 19.2, 19.6, 18.5,
-        19.6, 18.8, 19.3, 19.2, 19.2, 19.3, 18.3, 18.7, 18.7, 18.7, 18.7, 19.3,
-        18.7, 18.8, 18.7, 19.8, 19.3,
+        27.2, 28.3, 28.2, 28.3, 26.7, 27.2, 27.2, 28.2, 28.1, 28.1, 28, 29.5,
+        28.1, 29, 27.7, 27.5, 28.1, 27.2, 27.2,
       ],
       tem2: [
-        17.5, 17.1, 17.2, 17.4, 17.3, 17.1, 17.4, 16.6, 17.2, 17, 17, 16.4,
-        16.2, 16.2, 17.3, 16.0, 16.0, 15.8, 16.3, 16.1, 18, 17.3, 18.1, 16.7,
-        18.2, 17.2, 17.4, 17.3, 17.2, 17.4, 16.1, 16.5, 16.5, 16.5, 16.7, 17.6,
-        16.6, 16.3, 16.7, 16.9, 17.7,
+        22.7, 23.2, 23.2, 23.1, 22.7, 22.8, 22.8, 23.5, 23.3, 23.3, 23.2, 23.9,
+        23.3, 23.4, 23.2, 23, 23.4, 22.9, 23,
+      ],
+      shidu1: [
+        48.9, 48.9, 48.9, 48.9, 48.9, 48.9, 48.9, 48.9, 49.0, 49.0, 49.0, 49.0,
+        49.0, 49.0, 49.1, 49.1, 49.1, 49.1, 49.1, 49.1, 49.1, 49.1, 49.1, 49.1,
+        49.2, 49.2, 49.2, 49.2, 49.3, 49.3, 49.3, 49.4, 49.4, 49.4, 49.4, 49.4,
+        49.4, 49.5, 49.5, 49.5, 49.5,
+      ],
+      shidu2: [
+        48.8, 48.8, 48.8, 48.8, 48.8, 48.8, 48.8, 48.8, 48.9, 48.9, 48.9, 48.9,
+        48.9, 48.9, 48.9, 48.9, 49.0, 49.0, 49.0, 49.0, 49.0, 49.0, 49.0, 49.1,
+        49.1, 49.1, 49.1, 49.1, 49.2, 49.2, 49.2, 49.2, 49.2, 49.3, 49.3, 49.3,
+        49.3, 49.3, 49.4, 49.4, 49.5,
+      ],
+      shiducha: [
+        0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1,
+        0.2, 0.2, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0, 0.1, 0.1, 0.1, 0.1, 0.1,
+        0.1, 0.1, 0.2, 0.2, 0.1, 0.1, 0.1, 0.1, 0.2, 0.1, 0.1, 0,
       ],
       airVR: [
-        2.0, 2.1, 2.3, 2.3, 2.4, 2.5, 2.5, 2.6, 2.6, 2.6, 2.6, 2.7, 2.7, 2.7,
-        2.7, 2.8, 2.8, 2.8, 2.9, 3.1, 3.1, 3.1, 3.1, 3.2, 3.2, 3.2, 3.2, 3.2,
-        3.3, 3.3, 3.3, 3.4, 3.4, 3.4, 3.4, 3.5, 3.5, 3.6, 3.6, 3.6, 3.7,
+        1.6, 1.6, 1.6, 1.7, 1.8, 1.8, 1.8, 2.4, 2.5, 2.6, 2.8, 2.8, 3.0, 3.1,
+        3.1, 3.1, 3.1, 3.1, 3.2,
       ],
       time: [
-        3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36, 39, 42, 45, 48, 51, 54, 57,
-        60, 63, 66, 69, 72, 75, 78, 81, 84, 87, 90, 93, 96, 99, 102, 105, 108,
-        111, 114, 117, 120, 123,
+        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+        21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38,
+        39, 40, 41,
       ],
-      currentTem1:0,
-      currentTem2:0,
-      currentTemDiff:0,
+      currentTem1: 0,
+      currentTem2: 0,
+      currentShidu1: 0,
+      currentShidu2: 0,
+      currentTemDiff: 0,
       currentAirVR: 0.0,
       index: 0,
     };
   },
   methods: {
+
+    // 切换页面数据内容
     changePart() {
       this.isCompare = !this.isCompare;
     },
-    // fetchData() {
-    //   d3.csv("/data/data.csv") // 使用 d3.csv() 方法加载 CSV 文件
-    //     .then((data) => {
-    //       let tem = data[0]; // 将读取到的 CSV 文件内容存储到数据属性中
-    //       this.temperature = tem[0];
-    //       console.log("data", this.temperature);
-    //     })
-    //     .catch((error) => {
-    //       console.error("读取 CSV 文件失败", error);
-    //     });
-    //   // fetch('/src/assets/data/data.csv') // 替换成你的 CSV 文件路径
-    //   //   .then(response => response.text())
-    //   //   .then(data => {
-    //   //     // // 将 CSV 数据按行分割为数组
-    //   //     // const lines = data.split('\n');
-    //   //     // // 获取第二行数据（去掉表头），并按逗号分割为数组
-    //   //     // const rowData = lines[1].split(',');
-    //   //     // // 提取湿度和温度数据
-    //   //     // const humidity = rowData[0].slice(0, 2);
-    //   //     // const temperature = rowData[0].slice(2);
-    //   //     // // 更新数据
-    //   //     // this.humidity = humidity;
-    //   //     // this.temperature = temperature;
-    //   //     this.temperature = data
-    //   //   })
-    //   //   .catch(error => console.error(error));
-    // },
-    // 左侧part1
-    leftPart1() {
+    // 动态获取并更新、存储数据
+    loadData() {
+        axios.get('/src/assets/data.csv')
+        .then(response => {
+          // 处理CSV数据，将其存储到csvData数组中
+          this.inlet_humidity = response.data.substring(1, 3);
+          this.inlet_tem = response.data.substring(4, 6);
+          this.outlet_humidity = response.data.substring(7, 9);
+          this.outlet_tem = response.data.substring(10, 12);
+          
+          // 更新数据数组
+          let newData = 0
+          newData = this.inlet_humidity
+          if (this.historyData.length < 5) {
+            // 如果数据数量小于5，直接添加到数组末尾
+            this.historyData.push(newData);
+          } else {
+            // 如果数据数量已经是5个，先移除第一个数据，然后将新数据添加到数组末尾
+            this.historyData.shift();
+            this.historyData.push(newData);
+          }
+          let time = 0
+          if(this.historyTime.length!= 0){
+            time = this.metaTime + this.historyTime[this.historyTime.length-1]
+          }
+          else{
+            time += 1
+          }
+          if (this.historyTime.length < 5) {
+            // 如果数据数量小于5，直接添加到数组末尾
+            this.historyTime.push(time)
+
+          } else {
+            // 如果数据数量已经是5个，先移除第一个数据，然后将新数据添加到数组末尾
+            this.historyTime.shift();
+            this.historyTime.push(time)
+          }
+
+        })
+        .catch(error => {
+          console.error('Failed to fetch CSV data:', error);
+        });
+    },
+
+    // ************************************  数据状况  ************************************
+    // 入口温度图例
+    inletAirTem() {
       let myChartL1 = echarts.init(document.getElementById("enterPart1"));
       var option;
 
@@ -250,27 +294,27 @@ export default {
       };
       let index = 0;
       setInterval(() => {
-        index = option.dataZoom[0].endValue
+        index = option.dataZoom[0].endValue;
         if (option.dataZoom[0].endValue == option.series[0].data.length - 1) {
           option.dataZoom[0].endValue = 4;
-          this.currentTem1= this.tem1[index];
+          this.currentTem1 = this.tem1[index];
           option.dataZoom[0].startValue = 0;
         } else {
-          this.currentTem1= this.tem1[index];
+          this.currentTem1 = this.tem1[index];
           option.dataZoom[0].endValue = option.dataZoom[0].endValue + 1;
           option.dataZoom[0].startValue = option.dataZoom[0].startValue + 1;
         }
         myChartL1.setOption(option);
-      }, 3000);
+      }, this.changeTime);
     },
-    // 左侧part2
-    leftPart2() {
+    // 入口湿度图例
+    inletHumidity() {
       let myChartL2 = echarts.init(document.getElementById("enterPart2"));
       // 绘制图表
-      var option
+      var option;
       option = {
         title: {
-          text: "进风湿度(RH)",
+          text: "进风湿度(%)",
           textStyle: { color: "rgb(242, 151, 1)" },
         },
         tooltip: {
@@ -293,7 +337,7 @@ export default {
           },
         },
         xAxis: {
-          data: this.time,
+          data: this.historyTime,
         },
         yAxis: {},
         dataZoom: [
@@ -309,7 +353,7 @@ export default {
           {
             name: "湿度",
             type: "bar",
-            data: this.tem1,
+            data: this.historyData,
             label: {
               // 显示数值
               show: true,
@@ -343,18 +387,202 @@ export default {
       };
       let index = 0;
       setInterval(() => {
+        // index = option.dataZoom[0].endValue;
+        // if (option.dataZoom[0].endValue == option.series[0].data.length - 1) {
+        //   option.dataZoom[0].endValue = 4;
+        //   this.currentshidu2 = this.shidu2[index];
+        //   option.dataZoom[0].startValue = 0;
+        // } else {
+        //   this.currentshidu2 = this.shidu2[index];
+        //   option.dataZoom[0].endValue = option.dataZoom[0].endValue + 1;
+        //   option.dataZoom[0].startValue = option.dataZoom[0].startValue + 1;
+        // }
+        myChartL2.setOption(option);
+      }, this.changeTime);
+    },
+    // 出口温度图例
+    exhaustTem() {
+      let myChartR1 = echarts.init(document.getElementById("exitPart1"));
+      // 绘制图表
+      var option;
+
+      option = {
+        title: {
+          text: "排风温度(°C)",
+          textStyle: { color: "rgba(10, 191, 197)" },
+        },
+        tooltip: {
+          // 鼠标悬浮提示框显示 X和Y 轴数据
+          trigger: "axis",
+          backgroundColor: "rgba(10, 191, 197,.4)",
+          borderColor: "rgba(32, 33, 36,0.20)",
+          borderWidth: 1,
+          textStyle: {
+            // 文字提示样式
+            color: "#fff",
+            fontSize: "12",
+          },
+          axisPointer: {
+            // 坐标轴虚线
+            type: "cross",
+            label: {
+              backgroundColor: "#0abfc5",
+            },
+          },
+        },
+        xAxis: {
+          data: this.time,
+        },
+        yAxis: {},
+        dataZoom: [
+          {
+            // 第一个 dataZoom 组件
+            type: "inside",
+            xAxisIndex: 0, // 表示这个 dataZoom 组件控制 第一个 xAxis
+            startValue: 0, // 数据窗口范围的起始数值index
+            endValue: 4, // 数据窗口范围的结束数值index，即一次性展示多少个
+          },
+        ],
+        series: [
+          {
+            name: "温度",
+            type: "line",
+            data: this.tem2,
+            label: {
+              // 显示数值
+              show: true,
+              position: "top",
+              color: "#FFFFFF",
+            },
+            itemStyle: {
+              // 元素样式设置
+              normal: {
+                color: "#FFF",
+                lineStyle: {
+                  color: "rgb(51,192,197)",
+                },
+              },
+            },
+          },
+        ],
+      };
+      myChartR1.setOption(option);
+      window.onresize = function () {
+        //自适应大小
+        myChartR1.resize();
+      };
+      let index = 0;
+      setInterval(() => {
+        index = option.dataZoom[0].endValue;
         if (option.dataZoom[0].endValue == option.series[0].data.length - 1) {
           option.dataZoom[0].endValue = 4;
+          this.currentTem2 = this.tem2[index];
           option.dataZoom[0].startValue = 0;
         } else {
+          this.currentTem2 = this.tem2[index];
           option.dataZoom[0].endValue = option.dataZoom[0].endValue + 1;
           option.dataZoom[0].startValue = option.dataZoom[0].startValue + 1;
         }
-        myChartL2.setOption(option);
-      }, 3000);
+        myChartR1.setOption(option);
+      }, this.changeTime);
     },
-    // 左侧2part1
-    left2Part1() {
+    // 出口湿度图例
+    exhaustHumidity() {
+      let myChartR2 = echarts.init(document.getElementById("exitPart2"));
+      // 绘制图表
+      var option;
+      option = {
+        title: {
+          text: "排风湿度(%)",
+          textStyle: { color: "rgb(242, 151, 1)" },
+        },
+        tooltip: {
+          // 鼠标悬浮提示框显示 X和Y 轴数据
+          trigger: "axis",
+          backgroundColor: "rgba(242, 151, 1,.4)",
+          borderColor: "rgba(32, 33, 36,0.20)",
+          borderWidth: 1,
+          textStyle: {
+            // 文字提示样式
+            color: "#fff",
+            fontSize: "12",
+          },
+          axisPointer: {
+            // 坐标轴虚线
+            type: "cross",
+            label: {
+              backgroundColor: "rgb(242, 151, 1)",
+            },
+          },
+        },
+        dataZoom: [
+          {
+            // 第一个 dataZoom 组件
+            type: "inside",
+            xAxisIndex: 0, // 表示这个 dataZoom 组件控制 第一个 xAxis
+            startValue: 0, // 数据窗口范围的起始数值index
+            endValue: 4, // 数据窗口范围的结束数值index，即一次性展示多少个
+          },
+        ],
+        xAxis: {
+          data: this.time,
+        },
+        yAxis: {},
+        series: [
+          {
+            name: "湿度",
+            type: "bar",
+            data: this.shidu2,
+            label: {
+              // 显示数值
+              show: true,
+              position: "top",
+              color: "#FFFFFF",
+            },
+            color: echarts.graphic.LinearGradient(
+              0,
+              1,
+              0,
+              0,
+              [
+                {
+                  offset: 0,
+                  color: "rgb(242, 151, 1, 0.1)", // 0% 处的颜色
+                },
+                {
+                  offset: 1,
+                  color: "rgb(242, 151, 1, .7)", // 100% 处的颜色
+                },
+              ],
+              false
+            ),
+          },
+        ],
+      };
+      option && myChartR2.setOption(option);
+      window.onresize = function () {
+        //自适应大小
+        myChartR2.resize();
+      };
+      let index = 0;
+      setInterval(() => {
+        index = option.dataZoom[0].endValue;
+        if (option.dataZoom[0].endValue == option.series[0].data.length - 1) {
+          option.dataZoom[0].endValue = 4;
+          this.currentshidu1 = this.shidu1[index];
+          option.dataZoom[0].startValue = 0;
+        } else {
+          this.currentshidu1 = this.shidu1[index];
+          option.dataZoom[0].endValue = option.dataZoom[0].endValue + 1;
+          option.dataZoom[0].startValue = option.dataZoom[0].startValue + 1;
+        }
+        myChartR2.setOption(option);
+      }, this.changeTime);
+    },
+
+    // ************************************  数据对比  ************************************
+    // 出入口温度对比图例
+    temContrast() {
       let myChartL21 = echarts.init(document.getElementById("enter2Part1"));
       // 绘制图表
       var option;
@@ -454,10 +682,10 @@ export default {
           option.dataZoom[0].startValue = option.dataZoom[0].startValue + 1;
         }
         myChartL21.setOption(option);
-      }, 3000);
+      }, this.changeTime);
     },
-    // 左侧2part2
-    left2Part2() {
+    // 温度差图例
+    temDifference() {
       let myChartL22 = echarts.init(document.getElementById("enter2Part2"));
       // 绘制图表
       var option;
@@ -553,17 +781,17 @@ export default {
           option.dataZoom[0].startValue = option.dataZoom[0].startValue + 1;
         }
         myChartL22.setOption(option);
-      }, 3000);
+      }, this.changeTime);
     },
-    // 右侧part1
-    rightPart1() {
-      let myChartR1 = echarts.init(document.getElementById("exitPart1"));
+    // 出入口湿度对比图例
+    humidityContrast() {
+      let myChartR21 = echarts.init(document.getElementById("exit2Part1"));
       // 绘制图表
       var option;
 
       option = {
         title: {
-          text: "排风温度(°C)",
+          text: "湿度对比(%)",
           textStyle: { color: "rgba(10, 191, 197)" },
         },
         tooltip: {
@@ -588,7 +816,6 @@ export default {
         xAxis: {
           data: this.time,
         },
-        yAxis: {},
         dataZoom: [
           {
             // 第一个 dataZoom 组件
@@ -598,175 +825,15 @@ export default {
             endValue: 4, // 数据窗口范围的结束数值index，即一次性展示多少个
           },
         ],
-        series: [
-          {
-            name: "温度",
-            type: "line",
-            data: this.tem2,
-            label: {
-              // 显示数值
-              show: true,
-              position: "top",
-              color: "#FFFFFF",
-            },
-            itemStyle: {
-              // 元素样式设置
-              normal: {
-                color: "#FFF",
-                lineStyle: {
-                  color: "rgb(51,192,197)",
-                },
-              },
-            },
-          },
-        ],
-      };
-      myChartR1.setOption(option);
-      window.onresize = function () {
-        //自适应大小
-        myChartR1.resize();
-      };
-      let index = 0;
-      setInterval(() => {
-        index = option.dataZoom[0].endValue
-        if (option.dataZoom[0].endValue == option.series[0].data.length - 1) {
-          option.dataZoom[0].endValue = 4;
-          this.currentTem2= this.tem2[index];
-          option.dataZoom[0].startValue = 0;
-        } else {
-          this.currentTem2= this.tem2[index];
-          option.dataZoom[0].endValue = option.dataZoom[0].endValue + 1;
-          option.dataZoom[0].startValue = option.dataZoom[0].startValue + 1;
-        }
-        myChartR1.setOption(option);
-      }, 3000);
-    },
-    // 右侧part2
-    rightPart2() {
-      let myChartR2 = echarts.init(document.getElementById("exitPart2"));
-      // 绘制图表
-      var option
-      option = {
-        title: {
-          text: "排风湿度(RH)",
-          textStyle: { color: "rgb(242, 151, 1)" },
+        yAxis: {
+          min: 48,
+          max: 49.7,
         },
-        tooltip: {
-          // 鼠标悬浮提示框显示 X和Y 轴数据
-          trigger: "axis",
-          backgroundColor: "rgba(242, 151, 1,.4)",
-          borderColor: "rgba(32, 33, 36,0.20)",
-          borderWidth: 1,
-          textStyle: {
-            // 文字提示样式
-            color: "#fff",
-            fontSize: "12",
-          },
-          axisPointer: {
-            // 坐标轴虚线
-            type: "cross",
-            label: {
-              backgroundColor: "rgb(242, 151, 1)",
-            },
-          },
-        },
-        dataZoom: [
-          {
-            // 第一个 dataZoom 组件
-            type: "inside",
-            xAxisIndex: 0, // 表示这个 dataZoom 组件控制 第一个 xAxis
-            startValue: 0, // 数据窗口范围的起始数值index
-            endValue: 4, // 数据窗口范围的结束数值index，即一次性展示多少个
-          },
-        ],
-        xAxis: {
-          data: this.time,
-        },
-        yAxis: {},
-        series: [
-          {
-            name: "湿度",
-            type: "bar",
-            data: this.tem2,
-            label: {
-              // 显示数值
-              show: true,
-              position: "top",
-              color: "#FFFFFF",
-            },
-            color: echarts.graphic.LinearGradient(
-              0,
-              1,
-              0,
-              0,
-              [
-                {
-                  offset: 0,
-                  color: "rgb(242, 151, 1, 0.1)", // 0% 处的颜色
-                },
-                {
-                  offset: 1,
-                  color: "rgb(242, 151, 1, .7)", // 100% 处的颜色
-                },
-              ],
-              false
-            ),
-          },
-        ],
-      };
-      option && myChartR2.setOption(option);
-      window.onresize = function () {
-        //自适应大小
-        myChartR2.resize();
-      };
-      setInterval(() => {
-        if (option.dataZoom[0].endValue == option.series[0].data.length - 1) {
-          option.dataZoom[0].endValue = 4;
-          option.dataZoom[0].startValue = 0;
-        } else {
-          option.dataZoom[0].endValue = option.dataZoom[0].endValue + 1;
-          option.dataZoom[0].startValue = option.dataZoom[0].startValue + 1;
-        }
-        myChartR2.setOption(option);
-      }, 3000);
-    },
-    // 右侧2part1
-    right2Part1() {
-      let myChartR21 = echarts.init(document.getElementById("exit2Part1"));
-      // 绘制图表
-      myChartR21.setOption({
-        title: {
-          text: "湿度对比(RH)",
-          textStyle: { color: "rgba(10, 191, 197)" },
-        },
-        tooltip: {
-          // 鼠标悬浮提示框显示 X和Y 轴数据
-          trigger: "axis",
-          backgroundColor: "rgba(10, 191, 197,.4)",
-          borderColor: "rgba(32, 33, 36,0.20)",
-          borderWidth: 1,
-          textStyle: {
-            // 文字提示样式
-            color: "#fff",
-            fontSize: "12",
-          },
-          axisPointer: {
-            // 坐标轴虚线
-            type: "cross",
-            label: {
-              backgroundColor: "#0abfc5",
-            },
-          },
-        },
-        xAxis: {
-          data: ["12:05", "12:06", "12:07", "12:08", "12:09", "12:10"],
-        },
-        yAxis: {},
         series: [
           {
             name: "入口湿度",
             type: "line",
-            data: [36, 35, 34, 35, 33, 32],
+            data: this.shidu1,
             label: {
               // 显示数值
               show: true,
@@ -786,11 +853,11 @@ export default {
           {
             name: "出口湿度",
             type: "line",
-            data: [29, 25, 26, 25, 23, 22],
+            data: this.shidu2,
             label: {
               // 显示数值
               show: true,
-              position: "top",
+              position: "bottom",
               color: "#FFFFFF",
             },
             itemStyle: {
@@ -804,18 +871,31 @@ export default {
             },
           },
         ],
-      });
+      };
+      option && myChartR21.setOption(option);
       window.onresize = function () {
         //自适应大小
         myChartR21.resize();
       };
+      let index = 0;
+      setInterval(() => {
+        if (option.dataZoom[0].endValue == option.series[0].data.length - 1) {
+          option.dataZoom[0].endValue = 4;
+          option.dataZoom[0].startValue = 0;
+        } else {
+          option.dataZoom[0].endValue = option.dataZoom[0].endValue + 1;
+          option.dataZoom[0].startValue = option.dataZoom[0].startValue + 1;
+        }
+        myChartR21.setOption(option);
+      }, this.changeTime);
     },
-    // 右侧2part2
-    right2Part2() {
+    // 湿度差图例
+    humidityDifference() {
       let myChartR22 = echarts.init(document.getElementById("exit2Part2"));
       // 绘制图表
-      myChartR22.setOption({
-        title: { text: "湿度差(RH)", textStyle: { color: "rgb(242, 151, 1)" } },
+      var option;
+      option = {
+        title: { text: "湿度差(%)", textStyle: { color: "rgb(242, 151, 1)" } },
         tooltip: {
           // 鼠标悬浮提示框显示 X和Y 轴数据
           trigger: "axis",
@@ -836,14 +916,26 @@ export default {
           },
         },
         xAxis: {
-          data: ["12:05", "12:06", "12:07", "12:08", "12:09", "12:10"],
+          data: this.time,
         },
-        yAxis: {},
+        dataZoom: [
+          {
+            // 第一个 dataZoom 组件
+            type: "inside",
+            xAxisIndex: 0, // 表示这个 dataZoom 组件控制 第一个 xAxis
+            startValue: 0, // 数据窗口范围的起始数值index
+            endValue: 4, // 数据窗口范围的结束数值index，即一次性展示多少个
+          },
+        ],
+        yAxis: {
+          min: 0,
+          max: 0.25,
+        },
         series: [
           {
             name: "湿度差值",
             type: "line",
-            data: [7, 10, 8, 10, 10, 10],
+            data: this.shiducha,
             label: {
               // 显示数值
               show: true,
@@ -882,12 +974,25 @@ export default {
             },
           },
         ],
-      });
+      };
+      option && myChartR22.setOption(option);
       window.onresize = function () {
         //自适应大小
         myChartR22.resize();
       };
+      setInterval(() => {
+        if (option.dataZoom[0].endValue == option.series[0].data.length - 1) {
+          option.dataZoom[0].endValue = 4;
+          option.dataZoom[0].startValue = 0;
+        } else {
+          option.dataZoom[0].endValue = option.dataZoom[0].endValue + 1;
+          option.dataZoom[0].startValue = option.dataZoom[0].startValue + 1;
+        }
+        myChartR22.setOption(option);
+      }, this.changeTime);
     },
+
+    // 展示风量比
     showAirVR() {
       this.airTimer = setInterval(() => {
         if (this.index == this.airVR.length) {
@@ -897,19 +1002,20 @@ export default {
         }
         let airVR = this.airVR[this.index];
         this.currentAirVR = airVR;
-      }, 3000);
+      }, this.changeTime);
     },
+
   },
   mounted() {
-    // setInterval(this.fetchData, 5000);
-    this.leftPart1();
-    this.leftPart2();
-    this.left2Part1();
-    this.left2Part2();
-    this.rightPart1();
-    this.rightPart2();
-    this.right2Part1();
-    this.right2Part2();
+    setInterval(this.loadData, 3000);
+    this.inletAirTem();
+    this.inletHumidity();
+    this.temContrast();
+    this.temDifference();
+    this.exhaustTem();
+    this.exhaustHumidity();
+    this.humidityContrast();
+    this.humidityDifference();
     this.showAirVR();
     var that = this;
     var timer = "";
