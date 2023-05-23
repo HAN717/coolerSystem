@@ -205,11 +205,8 @@ export default {
             time += 1
           }
           if (this.historyTime.length < 5) {
-            // 如果数据数量小于5，直接添加到数组末尾
             this.historyTime.push(time)
-
           } else {
-            // 如果数据数量已经是5个，先移除第一个数据，然后将新数据添加到数组末尾
             this.historyTime.shift();
             this.historyTime.push(time)
           }
@@ -248,6 +245,16 @@ export default {
             label: {
               backgroundColor: "#0abfc5",
             },
+          },
+          formatter:function(params){
+            var html = '第' + params[0].name + '次记录' + "<br/>";
+            var dotHtml = '<span style="display:inline-block;margin-right:5px;border-radius:10px;width:10px;height:10px;background-color:#fff"></span>'
+            for(var i=0;i<params.length;i++){
+            html +=
+              dotHtml +params[i].seriesName+"&emsp;&emsp;"+
+              params[i].value +"°C"+"<br/>";
+            }
+            return html 
           },
         },
         xAxis: {
@@ -334,6 +341,16 @@ export default {
             label: {
               backgroundColor: "rgb(242, 151, 1)",
             },
+          },
+          formatter:function(params){
+            var html = '第' + params[0].name + '次记录' + "<br/>";
+            var dotHtml = '<span style="display:inline-block;margin-right:5px;border-radius:10px;width:10px;height:10px;background-color:#fff"></span>'
+            for(var i=0;i<params.length;i++){
+            html +=
+              dotHtml +params[i].seriesName+"&emsp;&emsp;"+
+              params[i].value +"%"+"<br/>";
+            }
+            return html 
           },
         },
         xAxis: {
@@ -429,6 +446,16 @@ export default {
               backgroundColor: "#0abfc5",
             },
           },
+          formatter:function(params){
+            var html = '第' + params[0].name + '次记录' + "<br/>";
+            var dotHtml = '<span style="display:inline-block;margin-right:5px;border-radius:10px;width:10px;height:10px;background-color:#fff"></span>'
+            for(var i=0;i<params.length;i++){
+            html +=
+              dotHtml +params[i].seriesName+"&emsp;&emsp;"+
+              params[i].value +"°C"+"<br/>";
+            }
+            return html 
+          },
         },
         xAxis: {
           data: this.time,
@@ -513,6 +540,16 @@ export default {
             label: {
               backgroundColor: "rgb(242, 151, 1)",
             },
+          },
+          formatter:function(params){
+            var html = '第' + params[0].name + '次记录' + "<br/>";
+            var dotHtml = '<span style="display:inline-block;margin-right:5px;border-radius:10px;width:10px;height:10px;background-color:#fff"></span>'
+            for(var i=0;i<params.length;i++){
+            html +=
+              dotHtml +params[i].seriesName+"&emsp;&emsp;"+
+              params[i].value +"%"+"<br/>";
+            }
+            return html 
           },
         },
         dataZoom: [
@@ -609,6 +646,15 @@ export default {
             label: {
               backgroundColor: "#0abfc5",
             },
+          },
+          formatter:function(params){
+            var html = '第' + params[0].name + '次记录' + "<br/>";
+            for(var i=0;i<params.length;i++){
+            html +=
+              params[i].marker +params[i].seriesName+"&emsp;&emsp;"+
+              params[i].value +"°C"+"<br/>";
+            }
+            return html 
           },
         },
         xAxis: {
@@ -708,6 +754,15 @@ export default {
             label: {
               backgroundColor: "rgb(242, 151, 1)",
             },
+          },
+          formatter:function(params){
+            var html = '第' + params[0].name + '次记录' + "<br/>";
+            for(var i=0;i<params.length;i++){
+            html +=
+              params[i].marker +params[i].seriesName+"&emsp;&emsp;"+
+              params[i].value +"°C"+"<br/>";
+            }
+            return html 
           },
         },
         xAxis: {
@@ -812,6 +867,15 @@ export default {
               backgroundColor: "#0abfc5",
             },
           },
+          formatter:function(params){
+            var html = '第' + params[0].name + '次记录' + "<br/>";
+            for(var i=0;i<params.length;i++){
+            html +=
+              params[i].marker +params[i].seriesName+"&emsp;&emsp;"+
+              params[i].value +"%"+"<br/>";
+            }
+            return html 
+          },
         },
         xAxis: {
           data: this.time,
@@ -913,6 +977,15 @@ export default {
             label: {
               backgroundColor: "rgb(242, 151, 1)",
             },
+          },
+          formatter:function(params){
+            var html = '第' + params[0].name + '次记录' + "<br/>";
+            for(var i=0;i<params.length;i++){
+            html +=
+              params[i].marker +params[i].seriesName+"&emsp;&emsp;"+
+              params[i].value +"%"+"<br/>";
+            }
+            return html 
           },
         },
         xAxis: {
