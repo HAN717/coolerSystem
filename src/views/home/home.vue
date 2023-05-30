@@ -52,20 +52,28 @@
       <div class="cicle6"></div>
       <div class="cicle7"></div>
       <div class="cicle8" style="text-align: center">
-        <span style="margin-left: -4px">{{ outlet_tem[outlet_tem.length-1] }}°C</span>
-        <p>送风温度</p>
+        <!-- <span style="margin-left: -4px">{{ outlet_tem[outlet_tem.length-1] }}°C</span>
+        <p>送风温度</p> -->
+        <span style="margin-left: -4px">{{ this.wb_efficiency }}%</span>
+        <p>湿球效率</p>
       </div>
       <div class="cicle9">
-        <span>{{ inlet_humidity[inlet_humidity.length-1] }}%</span>
-        <p>进口湿度</p>
+        <!-- <span>{{ inlet_humidity[inlet_humidity.length-1] }}%</span>
+        <p>进口湿度</p> -->
+        <span>{{ this.dp_efficiency}}%</span>
+        <p>露点效率</p>
       </div>
       <div class="cicle10" style="text-align: center">
-        <span style="margin-left: -4px">{{ inlet_tem[inlet_tem.length-1] }}°C</span>
-        <p>进风温度</p>
+        <!-- <span style="margin-left: -4px">{{ inlet_tem[inlet_tem.length-1] }}°C</span>
+        <p>进风温度</p> -->
+        <span style="margin-left: -4px">{{ this.t_wb }}°C</span>
+        <p>湿球温度</p>
       </div>
       <div class="cicle11">
-        <span>{{ outlet_humidity[outlet_humidity.length-1] }}%</span>
-        <p>出口湿度</p>
+        <!-- <span>{{ outlet_humidity[outlet_humidity.length-1] }}%</span>
+        <p>出口湿度</p> -->
+        <span style="margin-left: 15px">{{ this.t_dp }}°C</span>
+        <p>露点温度</p>
       </div>
     </div>
     <!-- riht -->
@@ -123,15 +131,17 @@ export default {
         1.6, 1.6, 1.6, 1.7, 1.8, 1.8, 1.8, 2.4, 2.5, 2.6, 2.8, 2.8, 3.0, 3.1,
         3.1, 3.1, 3.1, 3.1, 3.2,
       ],
-      currentair_VR: 0.0,
+      currentair_VR: 3.2,// 当前风量比
+      wb_efficiency: 0,   // 湿球效率
+      dp_efficiency: 0, // 露点效率
+      t_wb:0, // 湿球温度 
+      t_dp:0, // 露点效率
     };
   },
   methods: {
-    // 切换页面数据内容
-    changePart() {
-      this.is_compare = !this.is_compare;
-    },
-    // 动态获取并更新、存储数据
+
+    // ************************************  数据获取  ************************************
+    // 动态获取并更新、存储串口数据
     loadData() {
         axios.get('/src/assets/data.csv')
         .then(response => {
@@ -198,8 +208,22 @@ export default {
           console.error('Failed to fetch CSV data:', error);
         });
     },
+    // 获取湿球和露点温度并生成效率
+    catchData(){
+      axios.get('/src/assets/twb_tdp.txt')
+        .then(response => {
+          const arr = response.data.split(" "); // 分割出两个参数
+          this.t_wb = arr[0]; // 存放湿球温度
+          this.t_dp = arr[1]; // 存放露点温度
+          let in_t_db =  this.inlet_tem[this.inlet_tem.length-1] // 当前入风干球温度
+          let out_t_db =  this.outlet_tem[this.outlet_tem.length-1] // 当前排风干球温度
+          this.wb_efficiency = (( in_t_db - out_t_db ) / ( in_t_db - this.t_wb ) * 100 ).toFixed(1)
+          this.dp_efficiency = (( in_t_db - out_t_db ) / ( in_t_db - this.t_dp ) * 100 ).toFixed(1)
 
-    // ************************************  数据状况  ************************************
+      })
+    },
+
+    // ************************************  数据状况图例  ************************************
     // 入口温度图例
     inletAirTem() {
       let myChartL1 = echarts.init(document.getElementById("enterPart1"));
@@ -566,7 +590,7 @@ export default {
       }, this.change_time);
     },
 
-    // ************************************  数据对比  ************************************
+    // ************************************  数据对比图例  ************************************
     // 出入口温度对比图例
     temContrast() {
       let myChartL21 = echarts.init(document.getElementById("enter2Part1"));
@@ -984,6 +1008,7 @@ export default {
       }, this.change_time);
     },
 
+    // ************************************  其他方法  ************************************
     // 展示风量比
     showair_VR() {
       this.air_timer = setInterval(() => {
@@ -996,10 +1021,15 @@ export default {
         this.currentair_VR = air_VR;
       }, this.change_time);
     },
+    // 底部切换页面数据内容
+    changePart() {
+      this.is_compare = !this.is_compare;
+    },
 
   },
   mounted() {
     setInterval(this.loadData, 3000);
+    setInterval(this.catchData, 3000);
     this.inletAirTem();
     this.inletHumidity();
     this.temContrast();
@@ -1008,7 +1038,7 @@ export default {
     this.exhaustHumidity();
     this.humidityContrast();
     this.humidityDifference();
-    this.showair_VR();
+    // this.showair_VR();
     var that = this;
     var timer = "";
     timer = window.setInterval(function logname() {
