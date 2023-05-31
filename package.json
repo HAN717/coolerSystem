@@ -11,7 +11,9 @@
     "axios": "^1.4.0",
     "echarts": "^5.4.2",
     "element-plus": "^2.3.5",
+    "file-saver": "^2.0.5",
     "jquery": "^3.6.4",
+    "papaparse": "^5.4.1",
     "vue": "^3.2.47",
     "vue-router": "^4.1.6"
   },
