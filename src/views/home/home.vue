@@ -123,46 +123,51 @@
         <el-input v-model="input" :placeholder="meta_storage_time" @change="changeMetaTime()" 
         size="small" style="width: 71px;"/>
       </div>
-      <el-button @click="refreshLegend()" size="small" color="#0ac1c7b6" style="margin-top: 8px;">
+      <el-button @click="refreshWbLegend()" size="small" color="#0ac1c7b6" style="margin-top: 8px;">
         <span style="color:#fff">刷新图表</span></el-button>
       <!-- <br>
         <el-button @click="changeLabelState()" size="small" color="#0ac1c7b6" style="margin-top: 8px;">
         <span style="color:#fff">{{showLabel==true?'隐藏':'显示'}}数值</span></el-button> -->
       <br>
-        <el-button @click="clearData()" size="small" color="#0ac1c7b6" style="margin-top: 8px;">
+        <el-button @click="clearWbData()" size="small" color="#0ac1c7b6" style="margin-top: 8px;">
         <span style="color:#fff">清除记录</span></el-button>
       <br>
         <el-button size="small" color="#0ac1c7b6" style="margin-top: 8px;">
-        <span style="color:#fff"  @click="downloadCSV">下载记录</span></el-button>
+        <span style="color:#fff"  @click="downloadWbCSV()">下载记录</span></el-button>
     </div>
-    <template #footer>
-      <span class="dialog-footer">
-        <!-- <el-button @click="centerDialogVisible = false">Cancel</el-button>
-        <el-button type="primary" @click="centerDialogVisible = false">
-          Confirm
-        </el-button> -->
-      </span>
-    </template>
   </el-dialog>
   <!-- 历史露点效率对话框 -->
   <el-dialog
     v-model="dpDialogVisible"
     width="80%"
-    center
+    destroy-on-close
+    center draggable
   >
     <div style="margin-top: -30px;">
       <h2 style="text-align: center;color: #ffffffc1;letter-spacing: 2px;font-family: 幼圆;">
         历史露点效率变化图</h2>
     </div>
-    <div id="dpHistoryLegend" style="width: 100%; height: 400px;"></div>
-    <template #footer>
-      <span class="dialog-footer">
-        <!-- <el-button @click="centerDialogVisible = false">Cancel</el-button>
-        <el-button type="primary" @click="centerDialogVisible = false">
-          Confirm
-        </el-button> -->
-      </span>
-    </template>
+    <div v-if="t_dp_data.length!==0" id="dpHistoryLegend" style="width: 100%; height: 400px;"></div>
+    <div v-else-if="t_dp_data.length===0" style="width: 100%; height: 400px;"></div>
+    <div  style="position: absolute;right:30px;top:100px">
+    <!-- <div v-if="t_dp_data.length!==0" style="position: absolute;right:30px;top:100px"> -->
+      <div style="margin-top: 3px;">
+        <div><span style="color: #9e9c9c;font-size: 8px;">存储时间间隔</span></div>
+        <el-input v-model="input" :placeholder="meta_storage_time" @change="changeMetaTime()" 
+        size="small" style="width: 71px;"/>
+      </div>
+      <el-button @click="refreshDpLegend()" size="small" color="#0ac1c7b6" style="margin-top: 8px;">
+        <span style="color:#fff">刷新图表</span></el-button>
+      <!-- <br>
+        <el-button @click="changeLabelState()" size="small" color="#0ac1c7b6" style="margin-top: 8px;">
+        <span style="color:#fff">{{showLabel==true?'隐藏':'显示'}}数值</span></el-button> -->
+      <br>
+        <el-button @click="clearDpData()" size="small" color="#0ac1c7b6" style="margin-top: 8px;">
+        <span style="color:#fff">清除记录</span></el-button>
+      <br>
+        <el-button size="small" color="#0ac1c7b6" style="margin-top: 8px;">
+        <span style="color:#fff"  @click="downloadDpCSV()">下载记录</span></el-button>
+    </div>
   </el-dialog>
 </template>
 <script>
@@ -209,7 +214,8 @@ export default {
       t_dp_data:[],  // 露点效率历史记录
       showLabel:true, // 是否历史图表显示数值
       meta_storage_time:10, // 存储历史数据最小间隔时间
-      history_storage_time:[], // 存储历史数据时间
+      wb_history_storage_time:[], // 存储湿球历史数据时间
+      dp_history_storage_time:[], // 存储露点历史数据时间
       input:'', // 记录修改后的存储间隔
       wb_csvData:[],  // 提供下载的湿球效率数据
       dp_csvData:[],  // 提供下载的露点效率数据
@@ -280,7 +286,8 @@ export default {
           }
           // 存放历史数据时间
           if(this.history_time[this.history_time.length-1]%this.meta_storage_time==0){
-            this.history_storage_time.push(time)
+            this.wb_history_storage_time.push(time)
+            this.dp_history_storage_time.push(time)
           }
         })
         // 抛出异常
@@ -300,9 +307,11 @@ export default {
           this.wb_efficiency = (( in_t_db - out_t_db ) / ( in_t_db - this.t_wb ) * 100 ).toFixed(1)
           this.dp_efficiency = (( in_t_db - out_t_db ) / ( in_t_db - this.t_dp ) * 100 ).toFixed(1)
           let wb = ( parseFloat(this.wb_efficiency) + Math.random()*20 ).toFixed(2)
+          let dp = ( parseFloat(this.dp_efficiency) + Math.random()*20 ).toFixed(2)
           if(this.history_time[this.history_time.length-1]%this.meta_storage_time==0){
             // 在间隔设定时间内存储一次数据
             this.t_wb_data.push(wb)
+            this.t_dp_data.push(dp)
           }
       })
     },
@@ -1092,19 +1101,14 @@ export default {
       }, this.change_time);
     },
 
-    // ************************************  历史记录面板  ************************************    
+    // ************************************  历史记录面板  ************************************ 
+
+    // ************ 湿球效率 **************
     // 展示湿球图例
     showWbLengend(){
       this.wbDialogVisible=true
       $(document).ready(()=>{ // 确保元素已加载完成
         this.wbHistoricalLegend();
-      });
-    },
-    // 展示露点图例
-    showDpLengend(){
-      this.dpDialogVisible=true
-      $(document).ready(()=>{ // 确保元素已加载完成
-        this.dpHistoricalLegend();
       });
     },
     // 历史湿球效率图例
@@ -1131,7 +1135,7 @@ export default {
         xAxis: {
           type: 'category',
           boundaryGap: false,
-          data: this.history_storage_time
+          data: this.wb_history_storage_time
         },
         yAxis: {
           type: 'value',
@@ -1189,94 +1193,9 @@ export default {
         //自适应大小
         historyChart.resize();
       };
-      setInterval(() => {
-        historyChart.setOption(option);
-      }, this.change_time*this.meta_storage_time);
-    },
-    // 历史露点效率图例
-    dpHistoricalLegend(){
-      let base = +new Date(2023, 5, 30);
-      let oneDay = 24 * 3600 * 1000;
-      let date = [];
-      let data = [Math.random() * 100];
-      for (let i = 1; i < 20000; i++) {
-        var now = new Date((base += oneDay));
-        date.push([now.getFullYear(), now.getMonth() + 1, now.getDate()].join('/'));
-        data.push(Math.random()*60);
-      }
-      let historyChart = echarts.init(document.getElementById("dpHistoryLegend"));
-      // 绘制图表
-      var option;
-      option = {
-        tooltip: {
-          trigger: 'axis',
-          position: function (pt) {
-            return [pt[0], '10%'];
-          }
-        },
-        // title: {
-        //   left: 'center',
-        //   text: 'Large Area Chart'
-        // },
-        // toolbox: {
-        //   feature: {
-        //     dataZoom: {
-        //       yAxisIndex: 'none'
-        //     },
-        //     restore: {},
-        //     saveAsImage: {}
-        //   }
-        // },
-        xAxis: {
-          type: 'category',
-          boundaryGap: false,
-          data: date
-        },
-        yAxis: {
-          type: 'value',
-          // boundaryGap: [0, '100%']
-        },
-        dataZoom: [
-          {
-            type: 'inside',
-            start: 0,
-            end: 10
-          },
-          {
-            start: 0,
-            end: 10
-          }
-        ],
-        series: [
-          {
-            name: 'Fake Data1',
-            type: 'line',
-            symbol: 'none',
-            sampling: 'lttb',
-            itemStyle: {
-              color: 'rgb(46, 192, 196)'
-            },
-            areaStyle: {
-              color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                {
-                  offset: 0,
-                  color: 'rgb(46, 192, 196,.3)'
-                },
-                {
-                  offset: 1,
-                  color: 'rgb(46, 192, 196)'
-                }
-              ])
-            },
-            data: data
-          }
-        ]
-      };
-      option && historyChart.setOption(option);
-      window.onresize = function () {
-        //自适应大小
-        historyChart.resize();
-      };
+      // setInterval(() => {
+      //   historyChart.setOption(option);
+      // }, this.change_time*this.meta_storage_time);
     },
     // 修改历史图表数值显示或隐藏
     changeLabelState(){
@@ -1284,7 +1203,7 @@ export default {
       this.showWbLengend()
     },
     // 刷新图表
-    refreshLegend(){
+    refreshWbLegend(){
       if(this.t_wb_data.length==0){
         ElMessage({
           message: '时间间隔较短，暂无数据，请稍后再试',
@@ -1303,23 +1222,160 @@ export default {
       this.meta_storage_time = this.input
     },
     // 清除记录
-    clearData(){
+    clearWbData(){
       this.t_wb_data=[]
-      this.history_storage_time=[]
+      this.wb_history_storage_time=[]
     },
     // 下载历史记录
-    downloadCSV(){
+    downloadWbCSV(){
       // 将时间和效率数组转换为对象数组
-      this.wb_csvData = this.history_storage_time.map((t, i) => ({
+      this.wb_csvData = this.wb_history_storage_time.map((t, i) => ({
         time: t,
-        efficiency: this.t_wb_data[i]
+        wb_efficiency: this.t_wb_data[i]
       }));
 
       // 使用 Papa.unparse() 和 FileSaver.saveAs() 将对象数组转换为 CSV 文件并下载
       const csv = Papa.unparse(this.wb_csvData, { header: true });
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-      saveAs(blob, '历史数据.csv');
+      saveAs(blob, '湿球效率历史数据.csv');
+    },    
+    
+    // ************ 露点效率 **************
+    // 展示露点图例
+    showDpLengend(){
+      this.dpDialogVisible=true
+      $(document).ready(()=>{ // 确保元素已加载完成
+        this.dpHistoricalLegend();
+      });
     },
+    // 历史露点效率图例
+    dpHistoricalLegend(){
+      let historyChart2 = echarts.init(document.getElementById("dpHistoryLegend"));
+      // 绘制图表
+      var option;
+      option = {
+        tooltip: {
+          trigger: 'axis',
+          position: function (pt) {
+            return [pt[0], '10%'];
+          },
+          formatter:function(params){
+            var html = '第 ' + params[0].name + ' 次记录' + "<br/>";
+            var dotHtml = '<span style="display:inline-block;margin-right:5px;border-radius:10px;width:10px;height:10px;background-color:rgb(235, 147, 2)"></span>'
+            for(var i=0;i<params.length;i++){
+            html +=
+              dotHtml +params[i].seriesName+"&emsp;&emsp;"+ params[i].value +"%"+"<br/>";
+            }
+            return html 
+          },
+        },
+        xAxis: {
+          type: 'category',
+          boundaryGap: false,
+          data: this.dp_history_storage_time
+        },
+        yAxis: {
+          type: 'value',
+          // boundaryGap: [0, '100%']
+        },
+        dataZoom: [
+          {
+            type: 'inside',
+            start: 0,
+            end: 100
+          },
+          {
+            start: 0,
+            end: 10
+          }
+        ],
+        series: [
+          {
+            name: '露点效率',
+            type: 'line',
+            // symbol: 'none',
+            // sampling: 'lttb',
+            itemStyle: {
+              color: 'rgb(46, 192, 196,.7)'
+            },
+            splitLine: {
+              lineStyle: {
+                  color: "#a0a1a1"
+              }
+            },
+            label: {
+              // 显示数值
+              show: this.showLabel,
+              position: "top",
+              color: "#FFFFFF",
+            },
+            areaStyle: {
+              color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                {
+                  offset: 0,
+                  color: 'rgb(46, 192, 196,.1)'
+                },
+                {
+                  offset: 1,
+                  color: 'rgb(46, 192, 196)'
+                }
+              ])
+            },
+            data: this.t_dp_data
+          }
+        ]
+      };
+      option && historyChart2.setOption(option);
+      window.onresize = function () {
+        //自适应大小
+        historyChart2.resize();
+      };
+      // setInterval(() => {
+      //   historyChart2.setOption(option);
+      // }, this.change_time*this.meta_storage_time);
+    },
+    // 修改历史图表数值显示或隐藏
+    changeLabelState(){
+      this.showLabel = !this.showLabel
+      this.showWbLengend()
+    },
+    // 刷新图表
+    refreshDpLegend(){
+      if(this.t_dp_data.length==0){
+        ElMessage({
+          message: '时间间隔较短，暂无数据，请稍后再试',
+          type: 'warning',
+        })
+      }
+      this.dpHistoricalLegend()
+    },
+    // 修改历史数据存储时间间隔
+    changeMetaTime(){
+      ElNotification({
+        // title: 'Success',
+        message: '修改成功',
+        type: 'success',
+      })
+      this.meta_storage_time = this.input
+    },
+    // 清除记录
+    clearDpData(){
+      this.t_dp_data=[]
+      this.dp_history_storage_time=[]
+    },
+    // 下载历史记录
+    downloadDpCSV(){
+      // 将时间和效率数组转换为对象数组
+      this.dp_csvData = this.dp_history_storage_time.map((t, i) => ({
+        time: t,
+        dp_efficiency: this.t_dp_data[i]
+      }));
+
+      // 使用 Papa.unparse() 和 FileSaver.saveAs() 将对象数组转换为 CSV 文件并下载
+      const csv = Papa.unparse(this.dp_csvData, { header: true });
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+      saveAs(blob, '露点效率历史数据.csv');
+    },    
 
     // ************************************  其他方法  ************************************
     // 展示风量比
