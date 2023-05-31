@@ -51,13 +51,13 @@
       <div class="cicle5"></div>
       <div class="cicle6"></div>
       <div class="cicle7"></div>
-      <div class="cicle8" style="text-align: center">
+      <div class="cicle8" style="text-align: center" @click="showWbLengend()">
         <!-- <span style="margin-left: -4px">{{ outlet_tem[outlet_tem.length-1] }}°C</span>
         <p>送风温度</p> -->
         <span style="margin-left: -4px">{{ this.wb_efficiency }}%</span>
         <p>湿球效率</p>
       </div>
-      <div class="cicle9">
+      <div class="cicle9" @click="showDpLengend()">
         <!-- <span>{{ inlet_humidity[inlet_humidity.length-1] }}%</span>
         <p>进口湿度</p> -->
         <span>{{ this.dp_efficiency}}%</span>
@@ -69,7 +69,7 @@
         <span style="margin-left: -4px">{{ this.t_wb }}°C</span>
         <p>湿球温度</p>
       </div>
-      <div class="cicle11">
+      <div class="cicle11" >
         <!-- <span>{{ outlet_humidity[outlet_humidity.length-1] }}%</span>
         <p>出口湿度</p> -->
         <span style="margin-left: 15px">{{ this.t_dp }}°C</span>
@@ -102,12 +102,54 @@
     <h5 v-show="is_compare == true"><span>数据对比</span></h5>
     <p v-show="is_compare == true">Data Compare</p>
   </div>
+  <!-- 历史湿球效率对话框 -->
+  <el-dialog
+    v-model="wbDialogVisible"
+    width="80%"
+    center
+  >
+    <div style="margin-top: -30px;">
+      <h2 style="text-align: center;color: #ffffffc1;letter-spacing: 2px;font-family: 幼圆;">
+        历史湿球效率变化图</h2>
+    </div>
+    <div id="wbHistoryLegend" style="width: 100%; height: 400px;"></div>
+    <template #footer>
+      <span class="dialog-footer">
+        <!-- <el-button @click="centerDialogVisible = false">Cancel</el-button>
+        <el-button type="primary" @click="centerDialogVisible = false">
+          Confirm
+        </el-button> -->
+      </span>
+    </template>
+  </el-dialog>
+  <!-- 历史露点效率对话框 -->
+  <el-dialog
+    v-model="dpDialogVisible"
+    width="80%"
+    center
+  >
+    <div style="margin-top: -30px;">
+      <h2 style="text-align: center;color: #ffffffc1;letter-spacing: 2px;font-family: 幼圆;">
+        历史露点效率变化图</h2>
+    </div>
+    <div id="dpHistoryLegend" style="width: 100%; height: 400px;"></div>
+    <template #footer>
+      <span class="dialog-footer">
+        <!-- <el-button @click="centerDialogVisible = false">Cancel</el-button>
+        <el-button type="primary" @click="centerDialogVisible = false">
+          Confirm
+        </el-button> -->
+      </span>
+    </template>
+  </el-dialog>
 </template>
 <script>
 import "./main.css";
 import "../../assets/js/main";
 import * as echarts from "echarts";
+import $ from "jquery";
 import axios from 'axios'
+
 export default {
   data() {
     return {
@@ -136,6 +178,8 @@ export default {
       dp_efficiency: 0, // 露点效率
       t_wb:0, // 湿球温度 
       t_dp:0, // 露点效率
+      wbDialogVisible:false,  // 历史湿球效率对话框
+      dpDialogVisible:false // 历史露点效率对话框
     };
   },
   methods: {
@@ -1025,6 +1069,190 @@ export default {
     changePart() {
       this.is_compare = !this.is_compare;
     },
+    // 展示湿球图例
+    showWbLengend(){
+      this.wbDialogVisible=true
+      $(document).ready(()=>{ // 确保元素已加载完成
+        this.wbHistoricalLegend();
+      });
+    },
+    // 展示露点图例
+    showDpLengend(){
+      this.dpDialogVisible=true
+      $(document).ready(()=>{ // 确保元素已加载完成
+        this.dpHistoricalLegend();
+      });
+    },
+    // 历史湿球效率图例
+    wbHistoricalLegend(){
+      let base = +new Date(2023, 5, 30);
+      let oneDay = 24 * 3600 * 1000;
+      let date = [];
+      let data = [Math.random() * 100];
+      for (let i = 1; i < 20000; i++) {
+        var now = new Date((base += oneDay));
+        date.push([now.getFullYear(), now.getMonth() + 1, now.getDate()].join('/'));
+        data.push(Math.random()*60);
+      }
+      let historyChart = echarts.init(document.getElementById("wbHistoryLegend"));
+      // 绘制图表
+      var option;
+      option = {
+        tooltip: {
+          trigger: 'axis',
+          position: function (pt) {
+            return [pt[0], '10%'];
+          }
+        },
+        // title: {
+        //   left: 'center',
+        //   text: 'Large Area Chart'
+        // },
+        toolbox: {
+          feature: {
+            dataZoom: {
+              yAxisIndex: 'none'
+            },
+            restore: {},
+            saveAsImage: {}
+          }
+        },
+        xAxis: {
+          type: 'category',
+          boundaryGap: false,
+          data: date
+        },
+        yAxis: {
+          type: 'value',
+          // boundaryGap: [0, '100%']
+        },
+        dataZoom: [
+          {
+            type: 'inside',
+            start: 0,
+            end: 10
+          },
+          {
+            start: 0,
+            end: 10
+          }
+        ],
+        series: [
+          {
+            name: 'Fake Data1',
+            type: 'line',
+            symbol: 'none',
+            sampling: 'lttb',
+            itemStyle: {
+              color: 'rgb(235, 147, 2)'
+            },
+            areaStyle: {
+              color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                {
+                  offset: 0,
+                  color: 'rgb(235, 147, 2,.3)'
+                },
+                {
+                  offset: 1,
+                  color: 'rgb(235, 147, 2)'
+                }
+              ])
+            },
+            data: data
+          }
+        ]
+      };
+      option && historyChart.setOption(option);
+      window.onresize = function () {
+        //自适应大小
+        historyChart.resize();
+      };
+    },
+    // 历史露点效率图例
+    dpHistoricalLegend(){
+      let base = +new Date(2023, 5, 30);
+      let oneDay = 24 * 3600 * 1000;
+      let date = [];
+      let data = [Math.random() * 100];
+      for (let i = 1; i < 20000; i++) {
+        var now = new Date((base += oneDay));
+        date.push([now.getFullYear(), now.getMonth() + 1, now.getDate()].join('/'));
+        data.push(Math.random()*60);
+      }
+      let historyChart = echarts.init(document.getElementById("dpHistoryLegend"));
+      // 绘制图表
+      var option;
+      option = {
+        tooltip: {
+          trigger: 'axis',
+          position: function (pt) {
+            return [pt[0], '10%'];
+          }
+        },
+        // title: {
+        //   left: 'center',
+        //   text: 'Large Area Chart'
+        // },
+        toolbox: {
+          feature: {
+            dataZoom: {
+              yAxisIndex: 'none'
+            },
+            restore: {},
+            saveAsImage: {}
+          }
+        },
+        xAxis: {
+          type: 'category',
+          boundaryGap: false,
+          data: date
+        },
+        yAxis: {
+          type: 'value',
+          // boundaryGap: [0, '100%']
+        },
+        dataZoom: [
+          {
+            type: 'inside',
+            start: 0,
+            end: 10
+          },
+          {
+            start: 0,
+            end: 10
+          }
+        ],
+        series: [
+          {
+            name: 'Fake Data1',
+            type: 'line',
+            symbol: 'none',
+            sampling: 'lttb',
+            itemStyle: {
+              color: 'rgb(46, 192, 196)'
+            },
+            areaStyle: {
+              color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                {
+                  offset: 0,
+                  color: 'rgb(46, 192, 196,.3)'
+                },
+                {
+                  offset: 1,
+                  color: 'rgb(46, 192, 196)'
+                }
+              ])
+            },
+            data: data
+          }
+        ]
+      };
+      option && historyChart.setOption(option);
+      window.onresize = function () {
+        //自适应大小
+        historyChart.resize();
+      };
+    }
 
   },
   mounted() {
