@@ -125,15 +125,15 @@
       </div>
       <el-button @click="refreshLegend()" size="small" color="#0ac1c7b6" style="margin-top: 8px;">
         <span style="color:#fff">刷新图表</span></el-button>
-      <br>
+      <!-- <br>
         <el-button @click="changeLabelState()" size="small" color="#0ac1c7b6" style="margin-top: 8px;">
-        <span style="color:#fff">{{showLabel==true?'隐藏':'显示'}}数值</span></el-button>
+        <span style="color:#fff">{{showLabel==true?'隐藏':'显示'}}数值</span></el-button> -->
       <br>
         <el-button @click="clearData()" size="small" color="#0ac1c7b6" style="margin-top: 8px;">
         <span style="color:#fff">清除记录</span></el-button>
       <br>
         <el-button size="small" color="#0ac1c7b6" style="margin-top: 8px;">
-        <span style="color:#fff">下载记录</span></el-button>
+        <span style="color:#fff"  @click="downloadCSV">下载记录</span></el-button>
     </div>
     <template #footer>
       <span class="dialog-footer">
@@ -172,6 +172,8 @@ import * as echarts from "echarts";
 import $ from "jquery";
 import { ElNotification , ElMessage } from 'element-plus'
 import axios from 'axios'
+import Papa from 'papaparse';
+import { saveAs } from 'file-saver';
 
 export default {
   data() {
@@ -208,7 +210,9 @@ export default {
       showLabel:true, // 是否历史图表显示数值
       meta_storage_time:10, // 存储历史数据最小间隔时间
       history_storage_time:[], // 存储历史数据时间
-      input:'' // 记录修改后的存储间隔
+      input:'', // 记录修改后的存储间隔
+      wb_csvData:[],  // 提供下载的湿球效率数据
+      dp_csvData:[],  // 提供下载的露点效率数据
     };
   },
   methods: {
@@ -1088,23 +1092,7 @@ export default {
       }, this.change_time);
     },
 
-    // ************************************  其他方法  ************************************
-    // 展示风量比
-    showair_VR() {
-      this.air_timer = setInterval(() => {
-        if (this.index == this.air_VR.length) {
-          this.index = 0;
-        } else {
-          this.index++;
-        }
-        let air_VR = this.air_VR[this.index];
-        this.currentair_VR = air_VR;
-      }, this.change_time);
-    },
-    // 底部切换页面数据内容
-    changePart() {
-      this.is_compare = !this.is_compare;
-    },
+    // ************************************  历史记录面板  ************************************    
     // 展示湿球图例
     showWbLengend(){
       this.wbDialogVisible=true
@@ -1318,7 +1306,39 @@ export default {
     clearData(){
       this.t_wb_data=[]
       this.history_storage_time=[]
-    }
+    },
+    // 下载历史记录
+    downloadCSV(){
+      // 将时间和效率数组转换为对象数组
+      this.wb_csvData = this.history_storage_time.map((t, i) => ({
+        time: t,
+        efficiency: this.t_wb_data[i]
+      }));
+
+      // 使用 Papa.unparse() 和 FileSaver.saveAs() 将对象数组转换为 CSV 文件并下载
+      const csv = Papa.unparse(this.wb_csvData, { header: true });
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+      saveAs(blob, '历史数据.csv');
+    },
+
+    // ************************************  其他方法  ************************************
+    // 展示风量比
+    showair_VR() {
+      this.air_timer = setInterval(() => {
+        if (this.index == this.air_VR.length) {
+          this.index = 0;
+        } else {
+          this.index++;
+        }
+        let air_VR = this.air_VR[this.index];
+        this.currentair_VR = air_VR;
+      }, this.change_time);
+    },
+    // 底部切换页面数据内容
+    changePart() {
+      this.is_compare = !this.is_compare;
+    },
+
   },
   mounted() {
     setInterval(this.loadData, 3000);
