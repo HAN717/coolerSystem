@@ -1439,7 +1439,7 @@ export default {
           this.scene.add(directionalLight);
 
           // 添加材质
-          const material = new THREE.MeshPhongMaterial({ color: 0xffffff }); // 使用Phong材质，颜色设置为浅灰色
+          const material = new THREE.MeshPhongMaterial({ color: 0xbfd6ee }); // 使用Phong材质，颜色设置为浅灰色
           object.traverse((child) => {
             if (child instanceof THREE.Mesh) {
               child.material = material;
@@ -1448,7 +1448,7 @@ export default {
 
            // 保存加载的模型
            this.loadedModel = object;
-           this.loadedModel.rotation.y = Math.PI / 4; // 旋转45度
+           this.loadedModel.rotation.z = Math.PI / 1;
         },
         (xhr) => {
           // 进度回调（可选）
