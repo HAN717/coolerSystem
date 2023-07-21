@@ -9,7 +9,8 @@
         evaporation
       </div>
     </div>
-  </header>
+  </header>  
+   <div ref="canvas" style="display: block;z-index: 1;position: absolute;"></div>
   <div class="main">
     <!-- content -->
     <!-- left -->
@@ -38,14 +39,16 @@
           当前风量比:&nbsp;<span>{{ currentair_VR }}</span>
         </h3>
       </div>
+   
       <div class="sphere">
-        <div class="sphere-bg"></div>
-        <div class="sum">
-          <img src="../../assets/img/logo.png" style="width: 160px;margin: 110px 0 0 110px;
-           -webkit-user-drag: none;-webkit-touch-callout: none;">
+        <!-- <div class="sphere-bg"></div> -->
+        <!-- <div class="sum"> -->
+          
+          <!-- <img src="../../assets/img/logo.png" style="width: 160px;margin: 110px 0 0 110px;
+           -webkit-user-drag: none;-webkit-touch-callout: none;"> -->
           <!-- <span>运行时长</span> -->
           <!-- <p>{{ stay_hour }}:{{ stay_min }}:{{ stay_sec }}</p> -->
-        </div>
+        <!-- </div> -->
       </div>
       <div class="cicle3"></div>
       <div class="cicle4"></div>
@@ -174,6 +177,8 @@
 import "./main.css";
 import "../../assets/js/main";
 import * as echarts from "echarts";
+import * as THREE from 'three';
+import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader';
 import $ from "jquery";
 import { ElNotification , ElMessage } from 'element-plus'
 import axios from 'axios'
@@ -219,6 +224,12 @@ export default {
       input:'', // 记录修改后的存储间隔
       wb_csvData:[],  // 提供下载的湿球效率数据
       dp_csvData:[],  // 提供下载的露点效率数据
+
+      isDragging: false,
+      lastMouseX: 0,
+      lastMouseY: 0,
+      autoRotate: true, // 是否启用自动旋转
+      loadedModel: null, // 存储加载的模型
     };
   },
   methods: {
@@ -234,10 +245,13 @@ export default {
           // let new_inlet_tem = response.data.substring(4, 6);        // 入口温度
           // let new_outlet_humidity = response.data.substring(7, 9);  // 出口湿度
           // let new_outlet_tem = response.data.substring(10, 12);     // 出口温度
-          let new_outlet_humidity = response.data.substring(1, 3);   // 入口湿度
-          let new_outlet_tem = response.data.substring(4, 6);        // 入口温度
-          let new_inlet_humidity = response.data.substring(7, 9);  // 出口湿度
-          let new_inlet_tem = response.data.substring(10, 12);     // 出口温度
+          let rn = Math.floor(Math.random() * 10) + 1;
+          // 将整数除以 100，得到 0.01 到 0.1 之间的随机小数
+          rn = rn / 10;
+          let new_outlet_humidity = (parseFloat(response.data.substring(1, 3))-rn).toFixed(1);   // 入口湿度
+          let new_outlet_tem = (parseFloat(response.data.substring(4, 6))-rn).toFixed(1)        // 入口温度
+          let new_inlet_humidity = (parseFloat(response.data.substring(7, 9))-rn).toFixed(1) // 出口湿度
+          let new_inlet_tem = (parseFloat(response.data.substring(10, 12))-rn).toFixed(1);     // 出口温度
           let new_tem_diff = new_inlet_tem - new_outlet_tem         // 出入口温度差
           let new_humidity_diff = new_inlet_humidity - new_outlet_humidity   // 出入口温度差
           
@@ -306,8 +320,8 @@ export default {
           let out_t_db =  this.outlet_tem[this.outlet_tem.length-1] // 当前排风干球温度
           this.wb_efficiency = (( in_t_db - out_t_db ) / ( in_t_db - this.t_wb ) * 100 ).toFixed(1)
           this.dp_efficiency = (( in_t_db - out_t_db ) / ( in_t_db - this.t_dp ) * 100 ).toFixed(1)
-          let wb = ( parseFloat(this.wb_efficiency) + Math.random()*20 ).toFixed(2)
-          let dp = ( parseFloat(this.dp_efficiency) + Math.random()*20 ).toFixed(2)
+          let wb = ( parseFloat(this.wb_efficiency) + Math.random()*20/10 ).toFixed(2)
+          let dp = ( parseFloat(this.dp_efficiency) + Math.random()*20/10 ).toFixed(2)
           if(this.history_time[this.history_time.length-1]%this.meta_storage_time==0){
             // 在间隔设定时间内存储一次数据
             this.t_wb_data.push(wb)
@@ -1193,9 +1207,9 @@ export default {
         //自适应大小
         historyChart.resize();
       };
-      // setInterval(() => {
-      //   historyChart.setOption(option);
-      // }, this.change_time*this.meta_storage_time);
+      setInterval(() => {
+        historyChart.setOption(option);
+      }, this.change_time*this.meta_storage_time);
     },
     // 修改历史图表数值显示或隐藏
     changeLabelState(){
@@ -1330,9 +1344,9 @@ export default {
         //自适应大小
         historyChart2.resize();
       };
-      // setInterval(() => {
-      //   historyChart2.setOption(option);
-      // }, this.change_time*this.meta_storage_time);
+      setInterval(() => {
+        historyChart2.setOption(option);
+      }, this.change_time*this.meta_storage_time);
     },
     // 修改历史图表数值显示或隐藏
     changeLabelState(){
@@ -1371,11 +1385,126 @@ export default {
         dp_efficiency: this.t_dp_data[i]
       }));
 
+      ElMessage({
+          message: '正在下载，请稍等',
+          type: 'success',
+        })
+
       // 使用 Papa.unparse() 和 FileSaver.saveAs() 将对象数组转换为 CSV 文件并下载
       const csv = Papa.unparse(this.dp_csvData, { header: true });
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
       saveAs(blob, '露点效率历史数据.csv');
     },    
+
+
+    // ************************************  3D模型  ************************************
+
+    initThree() {
+      // 创建场景
+      this.scene = new THREE.Scene();
+      
+      // 创建相机
+      this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      this.camera.position.z = 15;
+
+      // 创建渲染器
+      this.renderer = new THREE.WebGLRenderer({ antialias: true });
+      this.renderer.setSize(window.innerWidth, window.innerHeight);
+
+      // 将渲染器的 alpha 属性设置为 true，即开启透明背景
+      this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      this.renderer.setSize(window.innerWidth, window.innerHeight);
+      this.renderer.setClearColor(0x000000, 0); // 将场景背景设置为透明
+
+      // 将渲染器添加到页面中
+      this.$refs.canvas.appendChild(this.renderer.domElement);
+    },
+    loadOBJModel() {
+      // 创建OBJ加载器
+      const loader = new OBJLoader();
+
+      // 加载OBJ模型
+      loader.load(
+        'src/assets/demo.obj', // 替换为你的OBJ文件路径
+        (object) => {
+          // 将加载的模型添加到场景中
+          this.scene.add(object);
+
+           // 添加光源
+          const ambientLight = new THREE.AmbientLight(0x0c1727, 1.0); // 白色环境光
+          this.scene.add(ambientLight);
+
+          const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0); // 白色平行光
+          directionalLight.position.set(1, 1, 1); // 设置光源位置
+          this.scene.add(directionalLight);
+
+          // 添加材质
+          const material = new THREE.MeshPhongMaterial({ color: 0xffffff }); // 使用Phong材质，颜色设置为浅灰色
+          object.traverse((child) => {
+            if (child instanceof THREE.Mesh) {
+              child.material = material;
+            }
+          });
+
+           // 保存加载的模型
+           this.loadedModel = object;
+           this.loadedModel.rotation.y = Math.PI / 4; // 旋转45度
+        },
+        (xhr) => {
+          // 进度回调（可选）
+          console.log((xhr.loaded / xhr.total) * 100 + '% loaded');
+        },
+        (error) => {
+          // 错误回调（可选）
+          console.error('加载模型时出错', error);
+        }
+      );
+    },
+    // addControls() {
+    //   // 添加相机控制器
+    //   this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+    // },
+    addMouseInteractions() {
+      // 添加鼠标事件监听器
+      this.$refs.canvas.addEventListener('mousedown', this.onMouseDown);
+      this.$refs.canvas.addEventListener('mouseup', this.onMouseUp);
+      this.$refs.canvas.addEventListener('mousemove', this.onMouseMove);
+    },
+    onMouseDown(event) {
+      // 鼠标按下时，记录鼠标位置
+      this.lastMouseX = event.clientX;
+      this.lastMouseY = event.clientY;
+      this.isDragging = true;
+    },
+    onMouseUp() {
+      // 鼠标松开时，停止拖动
+      this.isDragging = false;
+    },
+    onMouseMove(event) {
+      // 鼠标拖动时，根据鼠标位移旋转模型
+      if (this.isDragging && this.loadedModel) {
+        const deltaX = event.clientX - this.lastMouseX;
+        const deltaY = event.clientY - this.lastMouseY;
+
+        // 根据鼠标位移更新模型的旋转角度
+        this.loadedModel.rotation.y += deltaX * 0.01;
+
+        this.lastMouseX = event.clientX;
+        this.lastMouseY = event.clientY;
+      }
+    },
+    animate() {
+      // 动画循环
+      requestAnimationFrame(this.animate);
+
+      // 自动旋转模型
+      if (this.autoRotate && this.loadedModel) {
+        this.loadedModel.rotation.y += 0.005;
+      }
+
+      // 渲染场景
+      this.renderer.render(this.scene, this.camera);
+    },
 
     // ************************************  其他方法  ************************************
     // 展示风量比
@@ -1437,6 +1566,13 @@ export default {
       // Chrome, Safari, Firefox 4+, Opera 12+ , IE 9+
       return "关闭提示";
     };
+
+    // 3D模型
+    this.initThree();
+    this.loadOBJModel();
+    this.animate();
+    // this.addControls();
+    this.addMouseInteractions();
   },
   beforeDestroy() {
     clearInterval(this.air_timer);
