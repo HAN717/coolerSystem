@@ -10,7 +10,7 @@
       </div>
     </div>
   </header>  
-   <div ref="canvas" style="display: block;z-index: 1;position: absolute;"></div>
+   <div ref="canvas" style="display: block;z-index: 100;position: absolute;"></div>
   <div class="main">
     <!-- content -->
     <!-- left -->
@@ -67,13 +67,13 @@
         <span>{{ this.dp_efficiency}}%</span>
         <p>露点效率</p>
       </div>
-      <div class="cicle10" style="text-align: center">
+      <div class="cicle10" style="text-align: center" @click="showDpWbLengend()">
         <!-- <span style="margin-left: -4px">{{ inlet_tem[inlet_tem.length-1] }}°C</span>
         <p>进风温度</p> -->
         <span style="margin-left: -4px">{{ this.t_wb }}°C</span>
         <p>湿球温度</p>
       </div>
-      <div class="cicle11" >
+      <div class="cicle11" @click="showDpWbLengend()">
         <!-- <span>{{ outlet_humidity[outlet_humidity.length-1] }}%</span>
         <p>出口湿度</p> -->
         <span style="margin-left: 15px">{{ this.t_dp }}°C</span>
@@ -172,6 +172,39 @@
         <span style="color:#fff"  @click="downloadDpCSV()">下载记录</span></el-button>
     </div>
   </el-dialog>
+  <!-- 历史露点温度湿球温度对话框 -->
+  <el-dialog
+    v-model="dpWbDialogVisible"
+    width="80%"
+    destroy-on-close
+    center draggable
+  >
+    <div style="margin-top: -30px;">
+      <h2 style="text-align: center;color: #ffffffc1;letter-spacing: 2px;font-family: 幼圆;">
+        历史露点温度及湿球温度变化图</h2>
+    </div>
+    <div v-if="t_dp_data.length!==0" id="dpHistoryLegend" style="width: 100%; height: 400px;"></div>
+    <div v-else-if="t_dp_data.length===0" style="width: 100%; height: 400px;"></div>
+    <div  style="position: absolute;right:30px;top:100px">
+    <!-- <div v-if="t_dp_data.length!==0" style="position: absolute;right:30px;top:100px"> -->
+      <div style="margin-top: 3px;">
+        <div><span style="color: #9e9c9c;font-size: 8px;">存储时间间隔</span></div>
+        <el-input v-model="input" :placeholder="meta_storage_time" @change="changeMetaTime()" 
+        size="small" style="width: 71px;"/>
+      </div>
+      <el-button @click="refreshDpLegend()" size="small" color="#0ac1c7b6" style="margin-top: 8px;">
+        <span style="color:#fff">刷新图表</span></el-button>
+      <!-- <br>
+        <el-button @click="changeLabelState()" size="small" color="#0ac1c7b6" style="margin-top: 8px;">
+        <span style="color:#fff">{{showLabel==true?'隐藏':'显示'}}数值</span></el-button> -->
+      <br>
+        <el-button @click="clearDpData()" size="small" color="#0ac1c7b6" style="margin-top: 8px;">
+        <span style="color:#fff">清除记录</span></el-button>
+      <br>
+        <el-button size="small" color="#0ac1c7b6" style="margin-top: 8px;">
+        <span style="color:#fff"  @click="downloadDpCSV()">下载记录</span></el-button>
+    </div>
+  </el-dialog>
 </template>
 <script>
 import "./main.css";
@@ -215,6 +248,7 @@ export default {
       t_dp:0, // 露点效率
       wbDialogVisible:false,  // 历史湿球效率对话框
       dpDialogVisible:false, // 历史露点效率对话框
+      dpWbDialogVisible:false, // 历史湿球露点温度对话框
       t_wb_data:[],  // 湿球效率历史记录
       t_dp_data:[],  // 露点效率历史记录
       showLabel:true, // 是否历史图表显示数值
@@ -224,10 +258,9 @@ export default {
       input:'', // 记录修改后的存储间隔
       wb_csvData:[],  // 提供下载的湿球效率数据
       dp_csvData:[],  // 提供下载的露点效率数据
-
-      isDragging: false,
-      lastMouseX: 0,
-      lastMouseY: 0,
+      isDragging: false, // 是否可以拖动模型
+      lastMouseX: 0, // 鼠标x坐标
+      lastMouseY: 0, // 鼠标y坐标
       autoRotate: true, // 是否启用自动旋转
       loadedModel: null, // 存储加载的模型
     };
@@ -1116,7 +1149,6 @@ export default {
     },
 
     // ************************************  历史记录面板  ************************************ 
-
     // ************ 湿球效率 **************
     // 展示湿球图例
     showWbLengend(){
@@ -1396,16 +1428,24 @@ export default {
       saveAs(blob, '露点效率历史数据.csv');
     },    
 
+    // ************ 湿球露点温度 **************
+    // 展示湿球露点温度图例
+    showDpWbLengend(){
+      this.dpWbDialogVisible=true
+      $(document).ready(()=>{ // 确保元素已加载完成
+        this.wbHistoricalLegend();
+      });
+    },
 
     // ************************************  3D模型  ************************************
-
+    // 初始化three.js场景
     initThree() {
       // 创建场景
       this.scene = new THREE.Scene();
       
       // 创建相机
       this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-      this.camera.position.z = 15;
+      this.camera.position.z = 13;
 
       // 创建渲染器
       this.renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -1419,6 +1459,8 @@ export default {
       // 将渲染器添加到页面中
       this.$refs.canvas.appendChild(this.renderer.domElement);
     },
+
+    // 记载obj模型文件
     loadOBJModel() {
       // 创建OBJ加载器
       const loader = new OBJLoader();
@@ -1439,16 +1481,19 @@ export default {
           this.scene.add(directionalLight);
 
           // 添加材质
-          const material = new THREE.MeshPhongMaterial({ color: 0xbfd6ee }); // 使用Phong材质，颜色设置为浅灰色
+          const material = new THREE.MeshPhongMaterial({ 
+            color: 0xbfd6dd, 
+            transparent: true,    // 设置材质为透明
+            opacity: 0.8          // 透明度
+          }); // 使用Phong材质，颜色设置为浅灰色
           object.traverse((child) => {
             if (child instanceof THREE.Mesh) {
               child.material = material;
             }
           });
-
            // 保存加载的模型
            this.loadedModel = object;
-           this.loadedModel.rotation.z = Math.PI / 1;
+           this.loadedModel.rotation.z = Math.PI / 1.5; // 旋转模型
         },
         (xhr) => {
           // 进度回调（可选）
@@ -1460,10 +1505,6 @@ export default {
         }
       );
     },
-    // addControls() {
-    //   // 添加相机控制器
-    //   this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-    // },
     addMouseInteractions() {
       // 添加鼠标事件监听器
       this.$refs.canvas.addEventListener('mousedown', this.onMouseDown);
@@ -1571,7 +1612,6 @@ export default {
     this.initThree();
     this.loadOBJModel();
     this.animate();
-    // this.addControls();
     this.addMouseInteractions();
   },
   beforeDestroy() {
