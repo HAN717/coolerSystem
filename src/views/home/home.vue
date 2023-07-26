@@ -10,7 +10,9 @@
       </div>
     </div>
   </header>  
-   <div ref="canvas" style="display: block;z-index: 100;position: absolute;"></div>
+  <div ref="canvas" style="display: block;z-index: 100;position: absolute;">
+    <div style="width: 35rem;height: 20rem;position: absolute;z-index: 101;margin: 15rem 0 0 32%;" id="canvas_mb"></div>
+  </div>
   <div class="main">
     <!-- content -->
     <!-- left -->
@@ -263,6 +265,9 @@ export default {
       lastMouseY: 0, // 鼠标y坐标
       autoRotate: true, // 是否启用自动旋转
       loadedModel: null, // 存储加载的模型
+      isAutoRotating: true,    // 启用自动旋转
+      isMouseDragging: false,   // 鼠标交互时禁用模型自传
+      customCursor: 'url(../../assets/img/3D.png),auto', // 自定义鼠标图标路径
     };
   },
   methods: {
@@ -274,18 +279,24 @@ export default {
         .then(response => {
 
           // 处理CSV数据，分割取得，将其新数据存储到局部变量
-          // let new_inlet_humidity = response.data.substring(1, 3);   // 入口湿度
-          // let new_inlet_tem = response.data.substring(4, 6);        // 入口温度
-          // let new_outlet_humidity = response.data.substring(7, 9);  // 出口湿度
-          // let new_outlet_tem = response.data.substring(10, 12);     // 出口温度
-          let rn = Math.floor(Math.random() * 10) + 1;
-          // 将整数除以 100，得到 0.01 到 0.1 之间的随机小数
-          rn = rn / 10;
-          let new_outlet_humidity = (parseFloat(response.data.substring(1, 3))-rn).toFixed(1);   // 入口湿度
-          let new_outlet_tem = (parseFloat(response.data.substring(4, 6))-rn).toFixed(1)        // 入口温度
-          let new_inlet_humidity = (parseFloat(response.data.substring(7, 9))-rn).toFixed(1) // 出口湿度
-          let new_inlet_tem = (parseFloat(response.data.substring(10, 12))-rn).toFixed(1);     // 出口温度
-          let new_tem_diff = new_inlet_tem - new_outlet_tem         // 出入口温度差
+          let new_inlet_humidity = response.data.substring(1, 3);   // 入口湿度
+          let new_inlet_tem = parseFloat(response.data.substring(4, 6));        // 入口温度整数部分
+          let new_inlet_tem_l = parseFloat(response.data.substring(7, 8)*0.1);        // 入口温度小数部分
+          new_inlet_tem+=new_inlet_tem_l;
+          let new_outlet_humidity = response.data.substring(10, 12);  // 出口湿度
+          let new_outlet_tem = parseFloat(response.data.substring(13, 15));     // 出口温度整数部分
+          let new_outlet_humidity_l = parseFloat(response.data.substring(16, 17)*0.1);  // 出口温度小数部分
+          new_outlet_tem+=new_outlet_humidity_l;
+
+          // let rn = Math.floor(Math.random() * 10) + 1;
+          // // 将整数除以 100，得到 0.01 到 0.1 之间的随机小数
+          // rn = rn / 10;
+          // let new_outlet_humidity = (parseFloat(response.data.substring(1, 3))-rn).toFixed(1);   // 入口湿度
+          // let new_outlet_tem = (parseFloat(response.data.substring(4, 6))-rn).toFixed(1)        // 入口温度
+          // let new_inlet_humidity = (parseFloat(response.data.substring(7, 9))-rn).toFixed(1) // 出口湿度
+          // let new_inlet_tem = (parseFloat(response.data.substring(10, 12))-rn).toFixed(1);     // 出口温度
+
+          let new_tem_diff = (new_inlet_tem - new_outlet_tem ).toFixed(1)      // 出入口温度差
           let new_humidity_diff = new_inlet_humidity - new_outlet_humidity   // 出入口温度差
           
           // 更新数据数组，最大存入5个数据，若达到5个则数据前移一位，第五位存最新数据
@@ -349,16 +360,22 @@ export default {
           const arr = response.data.split(" "); // 分割出两个参数
           this.t_wb = arr[0]; // 存放湿球温度
           this.t_dp = arr[1]; // 存放露点温度
-          let in_t_db =  this.inlet_tem[this.inlet_tem.length-1] // 当前入风干球温度
-          let out_t_db =  this.outlet_tem[this.outlet_tem.length-1] // 当前排风干球温度
-          this.wb_efficiency = (( in_t_db - out_t_db ) / ( in_t_db - this.t_wb ) * 100 ).toFixed(1)
-          this.dp_efficiency = (( in_t_db - out_t_db ) / ( in_t_db - this.t_dp ) * 100 ).toFixed(1)
-          let wb = ( parseFloat(this.wb_efficiency) + Math.random()*20/10 ).toFixed(2)
-          let dp = ( parseFloat(this.dp_efficiency) + Math.random()*20/10 ).toFixed(2)
+          let in_t_db =  this.inlet_tem[this.inlet_tem.length-1] // 当前入口温度
+          let tem_diff = Math.abs(this.tem_diff[this.tem_diff.length-1]) // 温降(温差)
+          this.wb_efficiency = parseFloat( tem_diff / ( in_t_db- this.t_wb ) ).toFixed(1)
+          this.dp_efficiency = parseFloat( tem_diff / ( in_t_db- this.t_dp ) ).toFixed(1)
+
+          // console.log('data',this.wb_efficiency, this.wb_efficiency)
+          // let out_t_db =  this.outlet_tem[this.outlet_tem.length-1] // 当前排风干球温度
+          // this.wb_efficiency = (( in_t_db - out_t_db ) / ( in_t_db - this.t_wb ) * 100 ).toFixed(1)
+          // this.dp_efficiency = (( in_t_db - out_t_db ) / ( in_t_db - this.t_dp ) * 100 ).toFixed(1)
+          // let wb = ( parseFloat(this.wb_efficiency) + Math.random()*20/10 ).toFixed(2)
+          // let dp = ( parseFloat(this.dp_efficiency) + Math.random()*20/10 ).toFixed(2)
+
           if(this.history_time[this.history_time.length-1]%this.meta_storage_time==0){
             // 在间隔设定时间内存储一次数据
-            this.t_wb_data.push(wb)
-            this.t_dp_data.push(dp)
+            this.t_wb_data.push(this.wb_efficiency)
+            this.t_dp_data.push(this.dp_efficiency)
           }
       })
     },
@@ -1504,6 +1521,18 @@ export default {
           console.error('加载模型时出错', error);
         }
       );
+        
+      // 添加事件监听器来跟踪鼠标在canvas上的悬浮状态并更改鼠标样式
+      this.$refs.canvas.addEventListener('mouseleave', this.onMouseLeaveCanvas);
+
+      // 添加事件监听器来启用或禁用自动旋转
+      this.$refs.canvas.addEventListener('click', this.toggleAutoRotation);
+
+      // 添加事件监听器来跟踪鼠标在canvas上的交互
+      this.$refs.canvas.addEventListener('mousedown', this.onMouseDown);
+      this.$refs.canvas.addEventListener('mouseup', this.onMouseUp);
+      this.$refs.canvas.addEventListener('mousemove', this.onMouseMove);
+
     },
     addMouseInteractions() {
       // 添加鼠标事件监听器
@@ -1534,17 +1563,30 @@ export default {
         this.lastMouseY = event.clientY;
       }
     },
+    // 添加新方法来切换自动旋转
+    toggleAutoRotation() {
+      this.isAutoRotating = !this.isAutoRotating;
+    },
+
+    // 添加新方法来处理鼠标进入canvas并更改鼠标样式
+    onMouseEnterCanvas(event) {
+      this.$refs.canvas.style.cursor = 'url(../../assets/img/3D.png),auto';
+    },
+
+    // 修改animate()方法以包含新的功能
     animate() {
-      // 动画循环
       requestAnimationFrame(this.animate);
 
       // 自动旋转模型
-      if (this.autoRotate && this.loadedModel) {
+      if (this.isAutoRotating && this.loadedModel) {
         this.loadedModel.rotation.y += 0.005;
       }
 
-      // 渲染场景
-      this.renderer.render(this.scene, this.camera);
+      // 仅在不使用鼠标拖动时渲染场景
+      if (!this.isMouseDragging) {
+        this.renderer.render(this.scene, this.camera);
+      }
+
     },
 
     // ************************************  其他方法  ************************************
@@ -1567,8 +1609,8 @@ export default {
 
   },
   mounted() {
-    setInterval(this.loadData, 3000);
-    setInterval(this.catchData, 3000);
+    setInterval(this.loadData, this.change_time);
+    setInterval(this.catchData, this.change_time );
     this.inletAirTem();
     this.inletHumidity();
     this.temContrast();
