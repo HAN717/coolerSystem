@@ -6,6 +6,9 @@
     /* background-color: rgba(127, 255, 212, 0.192);  */
     cursor: url(../../assets/img/3D.png),auto;
   }
+  .reset:hover{
+    opacity: 0.8 !important;
+  }
   html,
   body {
     width: 100%;
@@ -21,9 +24,9 @@
     src: url('../../assets/font/LCdd.TTF');
   }
   #title {
-    font-size: 2rem;
+    font-size: 2vw;
     height: 42%;
-    margin: 0.6rem 0 0 29.6rem;
+    margin: 0.6vw 0 0 32vw;
     display: table;
     font-weight: 500;
     background-image: -webkit-linear-gradient(bottom, #86919e, #fff);
@@ -32,7 +35,7 @@
   }
   #subTitle{
     font-size: 13px;
-    margin-left: 1.7rem;
+    margin-left: 1.7vw;
     background-image: -webkit-linear-gradient(bottom, #86919e, #fff);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -52,7 +55,12 @@
     background-size: 100%;
     text-align: center;
     z-index: 999;
-    margin-left: -1rem;
+    margin-left: -1vw;
+  }
+  #header .el-input__wrapper{
+    background-color: rgb(0,0,0,0) !important;
+    border:none !important;
+    box-shadow: none !important;
   }
   .main {
   width: 100%;
@@ -63,18 +71,18 @@
   top: 10%;
 }
 #ratio{
-  text-align: center;width: 20rem;margin-left: 38.7%;
+  text-align: center;width: 20vw;margin-left: 38.7%;
   background: url(../../assets/img/title.png) no-repeat  center;
-  background-size: 100%;top: 4rem; position: absolute;
+  background-size: 100%;top: 4vw; position: absolute;
 }
 #ratio h3{
-  font-size: 1.5rem;
+  font-size: 1.5vw;
   background-image: -webkit-linear-gradient(bottom, #0abfc5, #c3c2c2);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 #ratio h3 > span{
-  font-size: 1.8rem;
+  font-size: 1.8vw;
   background-image: -webkit-linear-gradient(bottom, #f29701, #f7ac34);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;font-family: 'LCdd';
@@ -88,7 +96,7 @@
   }
 .main .total {
     width: 100%;
-    height: 30rem;
+    height: 30vw;
     float: left;
     position: relative;
   }
@@ -104,8 +112,8 @@
     top: 0;
   }
   .main .total .sphere {
-    width: 24rem;
-    height: 24rem;
+    width: 24vw;
+    height: 24vw;
     position: relative;
     margin: 14% auto 0;
   }
@@ -113,7 +121,7 @@
     position: absolute;
     z-index: 100;
     left: 0;
-    top: -8rem;
+    top: -8vw;
     width: 100%;
     height: 100%;
     background: url(../../assets/img/53earth.png) no-repeat center;
@@ -123,7 +131,7 @@
     position: absolute;
     z-index: 100;
     left: 0;
-    top: -7rem;
+    top: -7vw;
     width: 100%;
     height: 100%;
     background: url(../../assets/img/53cloud.png) no-repeat center;
@@ -134,32 +142,32 @@
     margin-top: 30%;
     padding-left: 32%;
     color: #005a79;
-    font-size: 1.3rem;
+    font-size: 1.3vw;
   }
   .main .total .sphere .sum p {
     margin-top: 2%;
     text-align: center;
     color: #003c63;
     font-family: 'LCdd';
-    font-size: 2rem;
+    font-size: 2vw;
   }
   .main .total .cicle3 {
-    width: 37rem;
-    height: 37rem;
+    width: 37vw;
+    height: 37vw;
     background: url(../../assets/img/circle.png) no-repeat center;
     background-size: 100%;
     position: absolute;
-    top: 23%;
+    top: 9.5vw;
     left: 50%;
     transform-style: preserve-3d;
     transform: translateX(-50%) rotateX(75deg);
     animation: rotate3 20s linear infinite;
   }
   .main .total .cicle4 {
-    width: 17rem;
-    height: 17rem;
+    width: 17vw;
+    height: 17vw;
     position: absolute;
-    top: 64%;
+    top: 23vw;
     left: 50%;
     transform-style: preserve-3d;
     background: url(../../assets/img/53gqright.png) no-repeat center;
@@ -168,10 +176,10 @@
     animation: rotate3 2s linear infinite;
   }
   .main .total .cicle5 {
-    width: 17rem;
-    height: 17rem;
+    width: 17vw;
+    height: 17vw;
     position: absolute;
-    top: 66%;
+    top: 23.7vw;
     left: 50%;
     transform-style: preserve-3d;
     background: url(../../assets/img/53gqleft.png) no-repeat center;
@@ -180,10 +188,10 @@
     animation: rotate4 2s linear infinite;
   }
   .main .total .cicle6 {
-    width: 12rem;
-    height: 12rem;
+    width: 12vw;
+    height: 12vw;
     position: absolute;
-    top: 77%;
+    top: 27vw;
     left: 50%;
     transform-style: preserve-3d;
     background: url(../../assets/img/535gqbottomright.png) no-repeat center;
@@ -192,10 +200,10 @@
     animation: rotate3 2s linear infinite;
   }
   .main .total .cicle7 {
-    width: 12rem;
-    height: 12rem;
+    width: 12vw;
+    height: 12vw;
     position: absolute;
-    top: 78%;
+    top: 28vw;
     left: 50%;
     transform-style: preserve-3d;
     background: url(../../assets/img/53gqbottomleft.png) no-repeat center;
@@ -207,13 +215,13 @@
   .main .total .cicle9,
   .main .total .cicle10,
   .main .total .cicle11 {
-    width: 6rem;
-    height: 6rem;
+    width: 6vw;
+    height: 6vw;
     position: absolute;
     top: 50%;
     left: 50%;
     z-index: 99;
-    margin-left: -2.5rem;
+    margin-left: -2.5vw;
     border-radius: 50%;
     cursor: pointer;
   }
@@ -224,7 +232,7 @@
     font-family: 'LCdd';
     display: block;
     margin-left: 26%;
-    font-size: 1.5rem;
+    font-size: 1.5vw;
     margin-top: 21%;
   }
   .main .total .cicle8 p,
@@ -232,7 +240,7 @@
   .main .total .cicle10 p,
   .main .total .cicle11 p {
     text-align: center;
-    font-size: 0.7rem;
+    font-size: 0.7vw;
   }
   .main .total .cicle8 {
     background: url(../../assets/img/circle1.png) no-repeat;
@@ -277,7 +285,7 @@
     height: 40%;
     display: table;
     margin: auto;
-    font-size: 1.1rem;
+    font-size: 1.1vw;
   }
   .bottom h5 span {
     display: table-cell;
@@ -285,7 +293,7 @@
   }
   .bottom p {
     color: #0ac1c7;
-    font-size: 0.8rem;
+    font-size: 0.8vw;
   }
   #left,#left2{
     width: 25%;
@@ -307,20 +315,20 @@
     animation: showPartRight 0.5s ease-in-out;
   }
   @keyframes showPartLeft {
-    from{transform: translateX(-23rem);}
+    from{transform: translateX(-23vw);}
     to{}
   }
   @keyframes showPartRight {
-    from{transform: translateX(23rem);}
+    from{transform: translateX(23vw);}
     to{}
   }
   #enterPart, #exitPart{
-    margin-left: 1.3rem;
-    margin-top: 3rem;color: rgb(217, 213, 213);
-    font-size: 1.5rem;
+    margin-left: 1.3vw;
+    margin-top: 3vw;color: rgb(217, 213, 213);
+    font-size: 1.5vw;
   }
   #enterPart1, #exitPart1,#enter2Part1, #exit2Part1{
-    margin-top: 2rem;
+    margin-top: 2vw;
   }
   /* animation */
   @keyframes rotate {

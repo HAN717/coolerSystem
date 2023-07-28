@@ -8,10 +8,17 @@
         Intelligent cooler visualization system based on dew point indirect
         evaporation
       </div>
+      <div id="topTools" style="position:absolute;top:0.65vw;left:3.6vw;width: 20vw;height:3vw;">
+          <img @click="resetAll()" src="../../assets/img/reset.png" alt="重置" title="图表重置"
+          style="cursor: pointer;opacity: 0.6;width: 1.3vw; height:1.3vw;margin-left: -17vw;
+          margin-right: 1.5vw;" class="reset">
+          <!-- <el-input v-model="change_time_Input" :placeholder="change_time" @change="changeTime()" 
+          size="small" style="width: 71px;margin-top: -0.8vw;"/> -->
+      </div>
     </div>
   </header>  
   <div ref="canvas" style="display: block;z-index: 100;position: absolute;">
-    <div style="width: 35rem;height: 20rem;position: absolute;z-index: 101;margin: 15rem 0 0 32%;" id="canvas_mb"></div>
+    <div style="width: 35vw;height: 20vw;position: absolute;z-index: 101;margin: 15vw 0 0 32%;" id="canvas_mb"></div>
   </div>
   <div class="main">
     <!-- content -->
@@ -154,7 +161,7 @@
     </div>
     <div v-if="t_dp_data.length!==0" id="dpHistoryLegend" style="width: 100%; height: 400px;"></div>
     <div v-else-if="t_dp_data.length===0" style="width: 100%; height: 400px;"></div>
-    <div  style="position: absolute;right:30px;top:100px">
+    <div style="position: absolute;right:30px;top:100px">
     <!-- <div v-if="t_dp_data.length!==0" style="position: absolute;right:30px;top:100px"> -->
       <div style="margin-top: 3px;">
         <div><span style="color: #9e9c9c;font-size: 8px;">存储时间间隔</span></div>
@@ -185,8 +192,8 @@
       <h2 style="text-align: center;color: #ffffffc1;letter-spacing: 2px;font-family: 幼圆;">
         历史露点温度及湿球温度变化图</h2>
     </div>
-    <div v-if="t_dp_data.length!==0" id="dpHistoryLegend" style="width: 100%; height: 400px;"></div>
-    <div v-else-if="t_dp_data.length===0" style="width: 100%; height: 400px;"></div>
+    <div v-if="dp_data.length!==0" id="dpTemHistoryLegend" style="width: 100%; height: 400px;"></div>
+    <div v-else-if="dp_data.length===0" style="width: 100%; height: 400px;"></div>
     <div  style="position: absolute;right:30px;top:100px">
     <!-- <div v-if="t_dp_data.length!==0" style="position: absolute;right:30px;top:100px"> -->
       <div style="margin-top: 3px;">
@@ -194,17 +201,17 @@
         <el-input v-model="input" :placeholder="meta_storage_time" @change="changeMetaTime()" 
         size="small" style="width: 71px;"/>
       </div>
-      <el-button @click="refreshDpLegend()" size="small" color="#0ac1c7b6" style="margin-top: 8px;">
+      <el-button @click="refreshDpWbLegend()" size="small" color="#0ac1c7b6" style="margin-top: 8px;">
         <span style="color:#fff">刷新图表</span></el-button>
       <!-- <br>
         <el-button @click="changeLabelState()" size="small" color="#0ac1c7b6" style="margin-top: 8px;">
         <span style="color:#fff">{{showLabel==true?'隐藏':'显示'}}数值</span></el-button> -->
       <br>
-        <el-button @click="clearDpData()" size="small" color="#0ac1c7b6" style="margin-top: 8px;">
+        <el-button @click="clearDpWbData()" size="small" color="#0ac1c7b6" style="margin-top: 8px;">
         <span style="color:#fff">清除记录</span></el-button>
       <br>
         <el-button size="small" color="#0ac1c7b6" style="margin-top: 8px;">
-        <span style="color:#fff"  @click="downloadDpCSV()">下载记录</span></el-button>
+        <span style="color:#fff"  @click="downloadDpWbCSV()">下载记录</span></el-button>
     </div>
   </el-dialog>
 </template>
@@ -253,13 +260,17 @@ export default {
       dpWbDialogVisible:false, // 历史湿球露点温度对话框
       t_wb_data:[],  // 湿球效率历史记录
       t_dp_data:[],  // 露点效率历史记录
+      wb_data:[],    // 湿球温度历史记录
+      dp_data:[],    // 露点温度历史记录
       showLabel:true, // 是否历史图表显示数值
       meta_storage_time:10, // 存储历史数据最小间隔时间
       wb_history_storage_time:[], // 存储湿球历史数据时间
       dp_history_storage_time:[], // 存储露点历史数据时间
       input:'', // 记录修改后的存储间隔
+      change_time_Input:'', // 记录修改后的全局图表刷新时间间隔
       wb_csvData:[],  // 提供下载的湿球效率数据
       dp_csvData:[],  // 提供下载的露点效率数据
+      dp_wb_csvData:[],  // 提供下载的露点与湿球温度数据
       isDragging: false, // 是否可以拖动模型
       lastMouseX: 0, // 鼠标x坐标
       lastMouseY: 0, // 鼠标y坐标
@@ -267,7 +278,14 @@ export default {
       loadedModel: null, // 存储加载的模型
       isAutoRotating: true,    // 启用自动旋转
       isMouseDragging: false,   // 鼠标交互时禁用模型自传
-      customCursor: 'url(../../assets/img/3D.png),auto', // 自定义鼠标图标路径
+      temperatureRanges: [      // 风量比区间
+        { min: 25, max: 27, value: 3.9 },
+        { min: 27, max: 29, value: 2.8 },
+        { min: 29, max: 30, value: 2.5 },
+        { min: 30, max: 31, value: 1.8 },
+        { min: 31, max: 32, value: 3.5 },
+        { min: 32, max: 33, value: 2.2 }
+      ],
     };
   },
   methods: {
@@ -328,7 +346,7 @@ export default {
           }
 
           // 更新数据检测时间
-          let time = 1
+          let time = 0
           // 同样只取五个
           if(this.history_time.length!= 0){
             time = this.meta_time + this.history_time[this.history_time.length-1]
@@ -376,6 +394,8 @@ export default {
             // 在间隔设定时间内存储一次数据
             this.t_wb_data.push(this.wb_efficiency)
             this.t_dp_data.push(this.dp_efficiency)
+            this.wb_data.push(this.t_wb)
+            this.dp_data.push(this.t_dp)
           }
       })
     },
@@ -1445,14 +1465,176 @@ export default {
       saveAs(blob, '露点效率历史数据.csv');
     },    
 
-    // ************ 湿球露点温度 **************
+    // ************ 湿球&&露点温度 **************
     // 展示湿球露点温度图例
     showDpWbLengend(){
       this.dpWbDialogVisible=true
       $(document).ready(()=>{ // 确保元素已加载完成
-        this.wbHistoricalLegend();
+        this.dpWbHistoricalLegend();
       });
     },
+    // 历史湿球&&露点温度图例
+    dpWbHistoricalLegend(){
+      let historyChart3 = echarts.init(document.getElementById("dpTemHistoryLegend"));
+      // 绘制图表
+      var option;
+      option = {
+        tooltip: {
+          trigger: 'axis',
+          position: function (pt) {
+            return [pt[0], '10%'];
+          },
+          formatter:function(params){
+            var html = '第' + params[0].name + '次记录' + "<br/>";
+            for(var i=0;i<params.length;i++){
+            html +=
+              params[i].marker +params[i].seriesName+"&emsp;&emsp;"+
+              params[i].value +"°C"+"<br/>";
+            }
+            return html 
+          },
+        },
+        xAxis: {
+          type: 'category',
+          boundaryGap: false,
+          data: this.dp_history_storage_time
+        },
+        yAxis: {
+          type: 'value',
+          // boundaryGap: [0, '100%']
+        },
+        dataZoom: [
+          {
+            type: 'inside',
+            start: 0,
+            end: 100
+          },
+          {
+            start: 0,
+            end: 10
+          }
+        ],
+        series: [
+          {
+            name: '湿球温度',
+            type: 'line',
+            // symbol: 'none',
+            // sampling: 'lttb',
+            itemStyle: {
+              color: 'rgb(51,192,197,.7)'
+            },
+            splitLine: {
+              lineStyle: {
+                  color: "#a0a1a1"
+              }
+            },
+            label: {
+              // 显示数值
+              show: this.showLabel,
+              position: "top",
+              color: "#FFFFFF",
+            },
+            areaStyle: {
+              color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                {
+                  offset: 0,
+                  color: 'rgb(51,192,197,.9)'
+                },
+                {
+                  offset: 1,
+                  color: 'rgb(51,192,197)'
+                }
+              ])
+            },
+            data: this.wb_data
+          },
+          {
+            name: '露点温度',
+            type: 'line',
+            // symbol: 'none',
+            // sampling: 'lttb',
+            itemStyle: {
+              color: 'rgb(242, 151, 1,.7)'
+            },
+            splitLine: {
+              lineStyle: {
+                  color: "#a0a1a1"
+              }
+            },
+            label: {
+              // 显示数值
+              show: this.showLabel,
+              position: "top",
+              color: "#FFFFFF",
+            },
+            areaStyle: {
+              color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                {
+                  offset: 0,
+                  color: 'rgb(242, 151, 1,.9)'
+                },
+                {
+                  offset: 1,
+                  color: 'rgb(242, 151, 1)'
+                }
+              ])
+            },
+            data: this.dp_data
+          }
+        ]
+      };
+      option && historyChart3.setOption(option);
+      window.onresize = function () {
+        //自适应大小
+        historyChart3.resize();
+      };
+      setInterval(() => {
+        historyChart3.setOption(option);
+      }, this.change_time*this.meta_storage_time);
+    },
+    // 刷新图表
+    refreshDpWbLegend(){
+      if(this.dp_data.length==0){
+        ElMessage({
+          message: '时间间隔较短，暂无数据，请稍后再试',
+          type: 'warning',
+        })
+      }
+      this.dpWbHistoricalLegend()
+    },
+    // 修改历史数据存储时间间隔
+    changeMetaTime(){
+      ElNotification({
+        // title: 'Success',
+        message: '修改成功',
+        type: 'success',
+      })
+      this.meta_storage_time = this.input
+    },
+    // 清除记录
+    clearDpWbData(){
+      this.dp_data=[]
+      this.wb_data=[]
+      this.dp_history_storage_time=[]
+    },
+    // 下载历史记录
+    downloadDpWbCSV(){
+      // 将时间和效率数组转换为对象数组
+      this.dp_wb_csvData = this.dp_history_storage_time.map((t, i) => ({
+        time: t,
+        dp: this.dp_data[i],
+        wb: this.wb_data[i]
+      }));
+
+      ElMessage({
+        message: '正在下载，请稍等',
+        type: 'success',
+      })
+
+      const csv = Papa.unparse(this.dp_wb_csvData, { header: true });
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+      saveAs(blob, '露点温度与湿球温度历史数据.csv');
+    }, 
 
     // ************************************  3D模型  ************************************
     // 初始化three.js场景
@@ -1476,7 +1658,6 @@ export default {
       // 将渲染器添加到页面中
       this.$refs.canvas.appendChild(this.renderer.domElement);
     },
-
     // 记载obj模型文件
     loadOBJModel() {
       // 创建OBJ加载器
@@ -1567,12 +1748,10 @@ export default {
     toggleAutoRotation() {
       this.isAutoRotating = !this.isAutoRotating;
     },
-
     // 添加新方法来处理鼠标进入canvas并更改鼠标样式
     onMouseEnterCanvas(event) {
       this.$refs.canvas.style.cursor = 'url(../../assets/img/3D.png),auto';
     },
-
     // 修改animate()方法以包含新的功能
     animate() {
       requestAnimationFrame(this.animate);
@@ -1592,19 +1771,50 @@ export default {
     // ************************************  其他方法  ************************************
     // 展示风量比
     showair_VR() {
-      this.air_timer = setInterval(() => {
-        if (this.index == this.air_VR.length) {
-          this.index = 0;
-        } else {
-          this.index++;
-        }
-        let air_VR = this.air_VR[this.index];
-        this.currentair_VR = air_VR;
-      }, this.change_time);
+      
     },
     // 底部切换页面数据内容
     changePart() {
       this.is_compare = !this.is_compare;
+    },
+    // 重置图表
+    resetAll(){
+      this.history_time.length = 0 
+      this.inlet_humidity.length = 0    // 入口湿度数据数组
+      this.inlet_tem.length = 0        // 入口温度数据数组
+      this.outlet_tem.length = 0       // 出口温度数据数组
+      this.outlet_humidity.length = 0  // 出口湿度数据数组
+      this.tem_diff.length = 0         // 出入口温度差
+      this.humidity_diff.length = 0     // 出入口湿度差
+      this.inletAirTem();
+      this.inletHumidity();
+      this.temContrast();
+      this.temDifference();
+      this.exhaustTem();
+      this.exhaustHumidity();
+      this.humidityContrast();
+      this.humidityDifference();
+
+      ElMessage({
+        message: '图表重置成功！',
+        type: 'success',
+      })
+    },
+    // 修改全局图表刷新时间间隔
+    changeTime(){
+      ElNotification({
+        message: '修改成功',
+        type: 'success',
+      })
+      this.change_time = this.change_time_Input
+      this.inletAirTem();
+      this.inletHumidity();
+      this.temContrast();
+      this.temDifference();
+      this.exhaustTem();
+      this.exhaustHumidity();
+      this.humidityContrast();
+      this.humidityDifference();
     },
 
   },
