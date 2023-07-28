@@ -279,12 +279,13 @@ export default {
       isAutoRotating: true,    // 启用自动旋转
       isMouseDragging: false,   // 鼠标交互时禁用模型自传
       temperatureRanges: [      // 风量比区间
-        { min: 25, max: 27, value: 3.9 },
+        { min: 0, max: 27, value: 2.8 },
         { min: 27, max: 29, value: 2.8 },
         { min: 29, max: 30, value: 2.5 },
         { min: 30, max: 31, value: 1.8 },
         { min: 31, max: 32, value: 3.5 },
-        { min: 32, max: 33, value: 2.2 }
+        { min: 32, max: 33, value: 2.2 },
+        { min: 33, max: 1000, value: 2.2 }
       ],
     };
   },
@@ -1774,7 +1775,7 @@ export default {
       const range = this.temperatureRanges.find(
         (range) => temperature >= range.min && temperature < range.max
       );
-      return range ? range.value : 3.2;
+      return range ? range.value : 2.8;
     },
     // 底部切换页面数据内容
     changePart() {
