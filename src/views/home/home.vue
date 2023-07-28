@@ -45,7 +45,7 @@
       <canvas class="rain"></canvas>
       <div id="ratio">
         <h3>
-          当前风量比:&nbsp;<span>{{ currentair_VR }}</span>
+          当前风量比:&nbsp;<span>{{ showair_VR(inlet_tem[inlet_tem.length-1]) }}</span>
         </h3>
       </div>
    
@@ -1770,8 +1770,11 @@ export default {
 
     // ************************************  其他方法  ************************************
     // 展示风量比
-    showair_VR() {
-      
+    showair_VR(temperature) {
+      const range = this.temperatureRanges.find(
+        (range) => temperature >= range.min && temperature < range.max
+      );
+      return range ? range.value : 3.2;
     },
     // 底部切换页面数据内容
     changePart() {
